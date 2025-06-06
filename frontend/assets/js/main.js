@@ -10,8 +10,11 @@ class IlluminusApp {
     constructor() {
         this.form = null;
         this.resultsSection = null;
+        this.progressSection = null;
         this.generatedVideoUrl = '';
         this.isProcessing = false;
+        this.startTime = null;
+        this.progressTimer = null;
         
         this.init();
     }
@@ -27,6 +30,8 @@ class IlluminusApp {
     initializeElements() {
         this.form = document.getElementById('uploadForm');
         this.resultsSection = document.getElementById('results');
+        this.progressSection = document.getElementById('progressSection');
+        
         this.elements = {
             originalVideo: document.getElementById('originalVideo'),
             resultVideo: document.getElementById('resultVideo'),
@@ -42,7 +47,16 @@ class IlluminusApp {
             submitBtn: this.form?.querySelector('button[type="submit"]'),
             toggleAdvanced: document.getElementById('toggleAdvanced'),
             advancedOptions: document.getElementById('advancedOptions'),
-            advancedIcon: document.getElementById('advancedIcon')
+            advancedIcon: document.getElementById('advancedIcon'),
+            // Progress elements
+            progressBar: document.getElementById('progressBar'),
+            progressPercent: document.getElementById('progressPercent'),
+            progressStatus: document.getElementById('progressStatus'),
+            progressDetails: document.getElementById('progressDetails'),
+            currentStep: document.getElementById('currentStep'),
+            framesCount: document.getElementById('framesCount'),
+            elapsedTime: document.getElementById('elapsedTime'),
+            estimatedTime: document.getElementById('estimatedTime')
         };
     }
 
@@ -116,6 +130,8 @@ class IlluminusApp {
         }
         
         this.setLoadingState(true);
+        this.showProgressSection();
+        this.startProgressTracking();
         
         try {
             const response = await fetch('/generate', {
@@ -129,6 +145,7 @@ class IlluminusApp {
             }
             
             const data = await response.json();
+            this.completeProgress();
             await this.updateResults(data, formData);
             
             this.showNotification('🎉 Video generated successfully!', 'success');
@@ -138,6 +155,7 @@ class IlluminusApp {
             this.showNotification(`Error: ${error.message}`, 'error');
         } finally {
             this.setLoadingState(false);
+            this.stopProgressTracking();
         }
     }
 
@@ -189,6 +207,91 @@ class IlluminusApp {
         }
     }
 
+    showProgressSection() {
+        if (this.progressSection) {
+            this.progressSection.classList.remove('hidden');
+            this.progressSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    startProgressTracking() {
+        this.startTime = Date.now();
+        let progress = 0;
+        let step = 1;
+        const steps = [
+            '📝 Preparing files...',
+            '🎬 Loading video frames...',
+            '🎵 Processing audio...',
+            '👤 Detecting faces...',
+            '🤖 Generating lip-sync...',
+            '💾 Saving result...'
+        ];
+
+        this.progressTimer = setInterval(() => {
+            // Simulate realistic progress
+            if (progress < 20) {
+                progress += Math.random() * 3;
+                this.updateProgress(progress, steps[0], 1);
+            } else if (progress < 40) {
+                progress += Math.random() * 2;
+                this.updateProgress(progress, steps[1], 2);
+            } else if (progress < 60) {
+                progress += Math.random() * 1.5;
+                this.updateProgress(progress, steps[2], 3);
+            } else if (progress < 80) {
+                progress += Math.random() * 1;
+                this.updateProgress(progress, steps[3], 4);
+            } else if (progress < 95) {
+                progress += Math.random() * 0.5;
+                this.updateProgress(progress, steps[4], 5);
+            }
+
+            // Update elapsed time
+            const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+            this.elements.elapsedTime.textContent = `${elapsed}s`;
+
+            // Estimate remaining time
+            if (progress > 10) {
+                const estimated = Math.max(0, Math.floor((elapsed / progress) * (100 - progress)));
+                this.elements.estimatedTime.textContent = `${estimated}s`;
+            }
+
+        }, 500);
+    }
+
+    updateProgress(progress, status, step) {
+        progress = Math.min(progress, 95); // Never reach 100% until completion
+        
+        this.elements.progressBar.style.width = `${progress}%`;
+        this.elements.progressPercent.textContent = `${Math.round(progress)}%`;
+        this.elements.progressStatus.textContent = status;
+        this.elements.currentStep.textContent = step;
+        this.elements.progressDetails.textContent = `Step ${step}/6 - ${new Date().toLocaleTimeString()}`;
+
+        // Color based on progress
+        if (progress < 25) {
+            this.elements.progressBar.className = 'bg-gradient-to-r from-red-500 to-orange-500 h-8 rounded-full transition-all duration-300 ease-out shadow-lg';
+        } else if (progress < 50) {
+            this.elements.progressBar.className = 'bg-gradient-to-r from-orange-500 to-yellow-500 h-8 rounded-full transition-all duration-300 ease-out shadow-lg';
+        } else if (progress < 75) {
+            this.elements.progressBar.className = 'bg-gradient-to-r from-yellow-500 to-blue-500 h-8 rounded-full transition-all duration-300 ease-out shadow-lg';
+        } else {
+            this.elements.progressBar.className = 'bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 h-8 rounded-full transition-all duration-300 ease-out shadow-lg';
+        }
+    }
+
+    completeProgress() {
+        this.updateProgress(100, '✅ Processing completed!', 6);
+        this.elements.estimatedTime.textContent = '0s';
+    }
+
+    stopProgressTracking() {
+        if (this.progressTimer) {
+            clearInterval(this.progressTimer);
+            this.progressTimer = null;
+        }
+    }
+
     handleDownload() {
         if (!this.generatedVideoUrl) {
             this.showNotification('No video to download', 'error');
@@ -208,6 +311,11 @@ class IlluminusApp {
     handleReset() {
         this.form.reset();
         this.resultsSection.classList.add('hidden');
+        this.progressSection?.classList.add('hidden');
+        
+        // Stop progress tracking
+        this.stopProgressTracking();
+        
         this.elements.originalVideo.src = '';
         this.elements.resultVideo.src = '';
         this.generatedVideoUrl = '';

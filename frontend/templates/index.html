@@ -145,14 +145,15 @@
                     </div>
 
                     <!-- Checkboxes -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="static" name="static" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                            <label for="static" class="ml-2 text-xs font-medium text-gray-600">Static Image Mode</label>
-                        </div>
+                    <div class="grid grid-cols-1 gap-4">
                         <div class="flex items-center">
                             <input type="checkbox" id="nosmooth" name="nosmooth" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                             <label for="nosmooth" class="ml-2 text-xs font-medium text-gray-600">No Face Smoothing</label>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-lg">
+                            <p class="text-xs text-blue-700">
+                                📝 <strong>Auto-loop Mode:</strong> Videos/images shorter than audio will be automatically looped to match audio length.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -169,6 +170,45 @@
                 </button>
             </div>
         </form>
+    </div>
+
+    <!-- Progress Section (initially hidden) -->
+    <div id="progressSection" class="hidden bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 Real-time Processing</h2>
+        
+        <!-- Progress Bar -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700" id="progressStatus">Processing...</span>
+                <span class="text-lg font-bold text-indigo-600" id="progressPercent">0%</span>
+            </div>
+            <div class="bg-gray-200 rounded-full h-8 shadow-inner">
+                <div id="progressBar" class="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 h-8 rounded-full transition-all duration-300 ease-out shadow-lg" style="width: 0%">
+                    <div class="h-full bg-white bg-opacity-20 rounded-full animate-pulse"></div>
+                </div>
+            </div>
+            <div class="mt-2 text-xs text-gray-500" id="progressDetails">Starting processing...</div>
+        </div>
+
+        <!-- Real-time Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                <div class="text-xl font-bold text-blue-600" id="currentStep">1</div>
+                <div class="text-xs text-gray-600">Current Step</div>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg text-center">
+                <div class="text-xl font-bold text-green-600" id="framesCount">0</div>
+                <div class="text-xs text-gray-600">Frames Processed</div>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-lg text-center">
+                <div class="text-xl font-bold text-purple-600" id="elapsedTime">0s</div>
+                <div class="text-xs text-gray-600">Elapsed Time</div>
+            </div>
+            <div class="bg-orange-50 p-4 rounded-lg text-center">
+                <div class="text-xl font-bold text-orange-600" id="estimatedTime">-</div>
+                <div class="text-xs text-gray-600">Est. Remaining</div>
+            </div>
+        </div>
     </div>
 
     <!-- Results Section (initially hidden) -->

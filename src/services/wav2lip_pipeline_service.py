@@ -141,12 +141,28 @@ class Wav2LipPipelineService:
             
             logger.info(f"Video frames: {len(frames)}, Audio chunks: {len(mel_chunks)}")
             
-            # Adjust frames to match audio length
-            if not static:
-                min_length = min(len(frames), len(mel_chunks))
-                frames = frames[:min_length]
-                mel_chunks = mel_chunks[:min_length]
-                logger.info(f"Adjusted to {min_length} frames/chunks")
+            # Auto-loop video to match audio length (thay vì cắt ngắn)
+            if len(frames) < len(mel_chunks):
+                logger.info(f"Video ({len(frames)} frames) shorter than audio ({len(mel_chunks)} chunks)")
+                logger.info("Auto-looping video to match audio length...")
+                
+                # Lặp lại frames để đủ độ dài audio
+                original_frame_count = len(frames)
+                while len(frames) < len(mel_chunks):
+                    frames.extend(frames[:original_frame_count])
+                
+                # Cắt chính xác bằng audio length
+                frames = frames[:len(mel_chunks)]
+                logger.info(f"Looped video to {len(frames)} frames to match audio")
+                
+            elif len(frames) > len(mel_chunks):
+                logger.info(f"Video ({len(frames)} frames) longer than audio ({len(mel_chunks)} chunks)")
+                logger.info("Trimming video to match audio length...")
+                frames = frames[:len(mel_chunks)]
+                logger.info(f"Trimmed video to {len(frames)} frames")
+            
+            else:
+                logger.info(f"Video and audio lengths match: {len(frames)} frames")
             
             # Face detection and processing
             logger.info("Processing faces...")

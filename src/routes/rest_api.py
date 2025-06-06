@@ -1,60 +1,32 @@
+"""
+ILLUMINUS Wav2Lip - REST API Routes
+Traditional REST endpoints for file upload and processing
+
+Author: Andrew (ngpthanh15@gmail.com)
+Version: 1.0.0
+"""
+
 import os
 import sys
 import time
 import uuid
 from pathlib import Path
-from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, Dict, Any
 import shutil
-import subprocess
+import hashlib
 from loguru import logger
 
-# Add src to path để có thể import modules
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.config import hparams as hp
+from ..services.wav2lip_pipeline_service import Wav2LipPipelineService
+from ..services.face_detection_service import FaceDetectionService
 
-from src.services.wav2lip_pipeline_service import Wav2LipPipelineService
-from src.routes import websocket_router, rest_router
+router = APIRouter()
 
-# Initialize FastAPI app
-app = FastAPI(
-    title="ILLUMINUS Wav2Lip with Face Detection", 
-    description="GPU-Accelerated Real-Time Lip Sync Generation with WebSocket API",
-    version="1.0.0"
-)
-
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Include routers
-app.include_router(websocket_router, tags=["WebSocket"])
-app.include_router(rest_router, tags=["REST API"])
-
-# Configure static files and templates  
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
-templates = Jinja2Templates(directory="frontend/templates")
-
-# Create necessary directories
-UPLOAD_FOLDER = Path("static/uploads")
-RESULTS_FOLDER = Path("static/results")
-TEMP_FOLDER = Path("temp")
-
-for folder in [UPLOAD_FOLDER, RESULTS_FOLDER, TEMP_FOLDER]:
-    folder.mkdir(parents=True, exist_ok=True)
-
-# Initialize services (lazy load)
+# Global services (will be initialized lazily)
 pipeline_service = None
 face_detection_service = None
 
@@ -70,10 +42,9 @@ def get_services(device='auto'):
         else:
             actual_device = device
             
-        logger.info(f'Initializing services with device: {actual_device}')
+        logger.info(f'Initializing REST API services with device: {actual_device}')
         
         # Initialize face detection service first
-        from src.services.face_detection_service import FaceDetectionService
         face_detection_service = FaceDetectionService(
             device=actual_device,
             batch_size=16
@@ -84,37 +55,22 @@ def get_services(device='auto'):
             device=actual_device,
             face_det_batch_size=16,
             wav2lip_batch_size=128,
-            result_dir=str(TEMP_FOLDER),
+            result_dir="temp/rest_api",
             external_face_service=face_detection_service
         )
         
-        logger.info("Services initialized successfully")
+        # Create temp directory
+        Path("temp/rest_api").mkdir(parents=True, exist_ok=True)
+        
+        logger.info("REST API services initialized successfully")
     
     return pipeline_service, face_detection_service
 
-# Configure logging
-logger.add("logs/app.log", rotation="1 day", retention="7 days")
-
-# Routes
-@app.get("/favicon.ico")
-async def favicon():
-    """Serve favicon.ico"""
-    return FileResponse("favicon.ico")
-
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-@app.get("/websocket-test", response_class=HTMLResponse)
-async def websocket_test(request: Request):
-    """WebSocket test client page"""
-    return templates.TemplateResponse("websocket_test.html", {"request": request})
-
-@app.post("/generate")
+@router.post("/api/generate")
 async def generate_video(
     video: UploadFile = File(...),
     audio: UploadFile = File(...),
-    model: str = Form(...),
+    model: str = Form('compressed'),
     device: str = Form('auto'),
     # Face detection options
     face_det_batch_size: int = Form(16),
@@ -124,15 +80,16 @@ async def generate_video(
     pads_right: int = Form(0),
     # Video processing options
     resize_factor: int = Form(1),
+    static: bool = Form(False),
     nosmooth: bool = Form(False)
 ):
     """
-    Generate lip-sync video with face detection pipeline
+    REST API endpoint for video generation
+    Same functionality as the main /generate endpoint but organized in routes
     """
     start_time = time.time()
     
-    # Generate unique IDs for files using timestamp + short UUID
-    import hashlib
+    # Generate unique IDs for files
     timestamp = str(int(time.time()))
     job_id = hashlib.md5(f"{timestamp}_{video.filename}_{audio.filename}".encode()).hexdigest()[:8]
     
@@ -140,9 +97,15 @@ async def generate_video(
     video_ext = video.filename.split('.')[-1] if '.' in video.filename else 'mp4'
     audio_ext = audio.filename.split('.')[-1] if '.' in audio.filename else 'wav'
     
-    video_path = UPLOAD_FOLDER / f"{job_id}.{video_ext}"
-    audio_path = UPLOAD_FOLDER / f"{job_id}.{audio_ext}"
-    output_path = RESULTS_FOLDER / f"{job_id}_result.mp4"
+    upload_folder = Path("temp/rest_api/uploads")
+    results_folder = Path("temp/rest_api/results")
+    
+    upload_folder.mkdir(parents=True, exist_ok=True)
+    results_folder.mkdir(parents=True, exist_ok=True)
+    
+    video_path = upload_folder / f"{job_id}.{video_ext}"
+    audio_path = upload_folder / f"{job_id}.{audio_ext}"
+    output_path = results_folder / f"{job_id}_result.mp4"
     
     try:
         # Validate uploads
@@ -150,7 +113,7 @@ async def generate_video(
             raise HTTPException(status_code=400, detail="Both video and audio files are required")
         
         # Save uploaded files
-        logger.info(f"Processing job {job_id}: video={video.filename}, audio={audio.filename}")
+        logger.info(f"Processing REST API job {job_id}: video={video.filename}, audio={audio.filename}")
         
         with open(video_path, "wb") as buffer:
             shutil.copyfileobj(video.file, buffer)
@@ -174,7 +137,7 @@ async def generate_video(
         model_type = 'wav2lip' if model == 'original' else 'nota_wav2lip'
         
         # Process with pipeline
-        logger.info(f"Starting pipeline processing with model: {model_type}")
+        logger.info(f"Starting REST API pipeline processing with model: {model_type}")
         
         result = service.process_video_audio(
             video_path=str(video_path),
@@ -185,7 +148,7 @@ async def generate_video(
             nosmooth=nosmooth,
             # Video processing options
             resize_factor=resize_factor,
-            static=False,  # Always disabled static mode - auto-loop enabled
+            static=static,
             output_path=str(output_path)
         )
         
@@ -195,7 +158,7 @@ async def generate_video(
         # Prepare response
         response_data = {
             "status": "success",
-            "video_url": f"/static/results/{output_path.name}",
+            "video_url": f"/api/results/{output_path.name}",
             "total_processing_time": total_processing_time,
             "pipeline_processing_time": result['processing_time'],
             "inference_fps": result['inference_fps'],
@@ -206,12 +169,12 @@ async def generate_video(
             "job_id": job_id
         }
         
-        logger.info(f"Job {job_id} completed successfully: {response_data}")
+        logger.info(f"REST API job {job_id} completed successfully: {response_data}")
         
         return response_data
         
     except Exception as e:
-        logger.error(f"Error processing job {job_id}: {str(e)}")
+        logger.error(f"Error processing REST API job {job_id}: {str(e)}")
         
         # Cleanup in case of error
         for path in [video_path, audio_path, output_path]:
@@ -231,13 +194,28 @@ async def generate_video(
         video_path.unlink(missing_ok=True)
         audio_path.unlink(missing_ok=True)
 
-# Health check endpoint
-@app.get("/health")
-async def health_check():
+@router.get("/api/results/{filename}")
+async def get_result_file(filename: str):
+    """Serve result files"""
+    file_path = Path("temp/rest_api/results") / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(
+        path=file_path,
+        media_type='video/mp4',
+        filename=filename
+    )
+
+@router.get("/api/health")
+async def api_health():
+    """Health check for REST API"""
     import torch
     
     return {
         "status": "healthy",
+        "api_type": "REST",
         "pipeline_initialized": pipeline_service is not None,
         "face_detection_initialized": face_detection_service is not None,
         "gpu_available": torch.cuda.is_available(),
@@ -246,17 +224,16 @@ async def health_check():
         "timestamp": time.time()
     }
 
-@app.get("/status/{job_id}")
+@router.get("/api/status/{job_id}")
 async def get_job_status(job_id: str):
-    """Get job status (placeholder for future implementation)"""
-    # This could be extended to track job progress
-    result_path = RESULTS_FOLDER / f"{job_id}_result.mp4"
+    """Get job status for REST API"""
+    result_path = Path("temp/rest_api/results") / f"{job_id}_result.mp4"
     
     if result_path.exists():
         return {
             "job_id": job_id,
             "status": "completed",
-            "video_url": f"/static/results/{result_path.name}"
+            "video_url": f"/api/results/{result_path.name}"
         }
     else:
         return {
@@ -264,72 +241,13 @@ async def get_job_status(job_id: str):
             "status": "not_found"
         }
 
-@app.delete("/cleanup/{job_id}")
+@router.delete("/api/cleanup/{job_id}")
 async def cleanup_job(job_id: str):
-    """Cleanup job files"""
-    result_path = RESULTS_FOLDER / f"{job_id}_result.mp4"
+    """Cleanup job files for REST API"""
+    result_path = Path("temp/rest_api/results") / f"{job_id}_result.mp4"
     
     if result_path.exists():
         result_path.unlink()
         return {"status": "cleaned", "job_id": job_id}
     else:
-        return {"status": "not_found", "job_id": job_id}
-
-@app.on_event("startup")
-async def startup_event():
-    """Startup event - cleanup old files"""
-    logger.info("Starting ILLUMINUS Wav2Lip application...")
-    
-    # Clean up old files
-    current_time = time.time()
-    cleanup_age = 24 * 60 * 60  # 24 hours
-    
-    for folder in [UPLOAD_FOLDER, RESULTS_FOLDER, TEMP_FOLDER]:
-        if folder.exists():
-            for file_path in folder.glob("*"):
-                try:
-                    if file_path.is_file():
-                        # Delete files older than cleanup_age
-                        if current_time - file_path.stat().st_mtime > cleanup_age:
-                            file_path.unlink()
-                            logger.info(f"Cleaned up old file: {file_path}")
-                except Exception as e:
-                    logger.warning(f"Error cleaning up {file_path}: {e}")
-    
-    logger.info("Application startup completed")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Shutdown event - cleanup resources"""
-    logger.info("Shutting down ILLUMINUS Wav2Lip application...")
-    
-    # Cleanup services
-    global pipeline_service, face_detection_service
-    if pipeline_service:
-        pipeline_service.cleanup()
-        pipeline_service = None
-    if face_detection_service:
-        face_detection_service.cleanup()
-        face_detection_service = None
-    
-    logger.info("Application shutdown completed")
-
-if __name__ == "__main__":
-    import uvicorn
-    
-    # Check if WebSocket dependencies are available
-    try:
-        import websockets
-        import uvloop
-        logger.info("WebSocket dependencies detected - using optimized server")
-        uvicorn.run(
-            app, 
-            host="0.0.0.0", 
-            port=8000,
-            loop="uvloop",
-            ws="websockets"
-        )
-    except ImportError:
-        logger.warning("WebSocket dependencies not found - using basic server")
-        logger.warning("Install with: pip install 'uvicorn[standard]' websockets")
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        return {"status": "not_found", "job_id": job_id} 

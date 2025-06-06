@@ -80,6 +80,8 @@ python scripts/download_models.py --list
 
 ### 💻 Sử dụng
 
+#### 🌐 Web Interface (Traditional)
+
 1. **Tải Models**: Chạy script tải model tự động (xem phía trên)
 
 2. **Truy cập**: Mở browser và vào `http://localhost:8000`
@@ -94,6 +96,28 @@ python scripts/download_models.py --list
    - **Advanced Options**: Face detection settings, video processing
 
 5. **Generate**: Nhấn "Generate Video" và chờ kết quả
+
+#### ⚡ WebSocket API (Real-time)
+
+**WebSocket Endpoint**: `ws://localhost:8000/ws/lip-sync`
+
+```bash
+# Test WebSocket connectivity
+python scripts/websocket_test_client.py
+
+# Process with audio + image
+python scripts/websocket_test_client.py --audio sample.wav --image person.jpg
+
+# Browser test client
+curl http://localhost:8000/websocket-test
+```
+
+**Features**:
+- **Real-time processing** với progress updates
+- **Base64 input/output** cho audio, image và video
+- **Concurrent connections** support
+- **Error handling** và retry logic
+- **Performance metrics** tracking
 
 ### ⚙️ Advanced Options
 
@@ -159,25 +183,39 @@ ILLUMINUS/
 
 #### Common Issues
 
-**1. GPU not detected**
+**1. WebSocket Connection Issues**
+```bash
+# Error: "Unsupported upgrade request" or "No WebSocket library detected"
+
+# Fix cho Docker:
+scripts\fix_websocket_docker.bat
+
+# Fix cho Development:
+scripts\install_websocket_deps.bat
+
+# Hoặc manual install:
+pip install "uvicorn[standard]" websockets
+```
+
+**2. GPU not detected**
 ```bash
 # Check CUDA availability trong container
 docker-compose exec illuminus python -c "import torch; print(torch.cuda.is_available())"
 ```
 
-**2. Out of memory errors**
+**3. Out of memory errors**
 - Giảm `face_det_batch_size` từ 16 xuống 8 hoặc 4
 - Tăng `resize_factor` từ 1 lên 2 hoặc 4
 - Chuyển sang `cpu` mode
 
-**3. FFmpeg issues (Ubuntu/Linux)**
+**4. FFmpeg issues (Ubuntu/Linux)**
 ```bash
 # Install FFmpeg
 sudo apt-get update
 sudo apt-get install ffmpeg
 ```
 
-**4. Container issues**
+**5. Container issues**
 ```bash
 # Rebuild container
 docker-compose down

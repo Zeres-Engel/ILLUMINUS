@@ -46,14 +46,28 @@ class FaceDetectionService:
         """Lazy initialization của face detector"""
         if self.detector is None:
             try:
+                # Ensure device format is correct for face detection
+                device = self.device
+                if device not in ['cpu', 'cuda']:
+                    logger.warning(f"Invalid device '{device}', defaulting to 'cpu'")
+                    device = 'cpu'
+                
+                # Check if CUDA is available when requesting CUDA
+                if device == 'cuda' and not torch.cuda.is_available():
+                    logger.warning("CUDA requested but not available, falling back to CPU")
+                    device = 'cpu'
+                
+                logger.info(f"Initializing face detector with device: {device}")
+                
                 self.detector = face_detection.FaceAlignment(
                     face_detection.LandmarksType._2D, 
                     flip_input=False, 
-                    device=self.device
+                    device=device
                 )
                 logger.info("Face detector initialized successfully")
             except Exception as e:
                 logger.error(f"Failed to initialize face detector: {e}")
+                logger.error(f"Device: {self.device}, Checkpoint: {self.checkpoint_path}")
                 raise e
     
     def detect_faces_batch(self, images: List[np.ndarray]) -> List[Optional[Tuple[int, int, int, int]]]:
