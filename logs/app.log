@@ -713,3 +713,78 @@
 2025-06-06 15:20:46.575 | INFO     | app:shutdown_event:302 - Application shutdown completed
 2025-06-06 15:20:51.184 | INFO     | app:startup_event:268 - Starting ILLUMINUS Wav2Lip application...
 2025-06-06 15:20:51.196 | INFO     | app:startup_event:286 - Application startup completed
+2025-06-06 15:24:51.671 | INFO     | app:generate_video:140 - Processing job d0cd1673: video=video.mp4, audio=audio.wav
+2025-06-06 15:24:51.686 | INFO     | app:generate_video:155 - Files saved: video=165493 bytes, audio=118862 bytes
+2025-06-06 15:24:51.687 | INFO     | app:get_services:64 - Initializing services with device: cpu
+2025-06-06 15:24:51.689 | INFO     | src.services.face_detection_service:__init__:43 - FaceDetectionService initialized with device: cpu, batch_size: 16
+2025-06-06 15:24:51.692 | INFO     | src.services.wav2lip_pipeline_service:__init__:60 - Using external face detection service
+2025-06-06 15:24:51.692 | INFO     | src.services.video_processing_service:__init__:20 - VideoProcessingService initialized
+2025-06-06 15:24:51.693 | INFO     | src.services.wav2lip_pipeline_service:__init__:73 - Wav2LipPipelineService initialized with device: cpu
+2025-06-06 15:24:51.693 | INFO     | app:get_services:82 - Services initialized successfully
+2025-06-06 15:24:51.694 | INFO     | app:generate_video:164 - Starting pipeline processing with model: wav2lip
+2025-06-06 15:24:51.694 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:124 - Loading video frames...
+2025-06-06 15:24:51.736 | INFO     | src.services.video_processing_service:load_video_frames:57 - Reading video frames from: static/uploads/d0cd1673.mp4 (FPS: 25.0)
+2025-06-06 15:24:51.769 | INFO     | src.services.video_processing_service:load_video_frames:86 - Loaded 49 frames from video
+2025-06-06 15:24:51.769 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:138 - Processing audio...
+2025-06-06 15:24:51.803 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:142 - Video frames: 49, Audio chunks: 43
+2025-06-06 15:24:51.807 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:149 - Adjusted to 43 frames/chunks
+2025-06-06 15:24:51.808 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:152 - Processing faces...
+2025-06-06 15:24:51.810 | INFO     | src.services.face_detection_service:process_video_frames:153 - Detecting faces in 43 frames...
+2025-06-06 15:24:52.322 | INFO     | src.services.face_detection_service:_initialize_detector:54 - Face detector initialized successfully
+2025-06-06 15:24:58.428 | INFO     | src.services.face_detection_service:process_video_frames:190 - Successfully processed 43 frames
+2025-06-06 15:24:58.429 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:161 - Generating lip-sync video with wav2lip...
+2025-06-06 15:24:58.430 | INFO     | src.services.wav2lip_pipeline_service:_get_wave2lip_servicer:78 - Initializing Wave2Lip servicer...
+2025-06-06 15:24:59.680 | INFO     | src.services.wav2lip_pipeline_service:_get_wave2lip_servicer:83 - Wave2Lip servicer initialized
+2025-06-06 15:25:02.134 | INFO     | src.services.video_processing_service:save_video_frames:131 - Video saved to: temp/temp_result.mp4 (43 frames, 25.0 FPS)
+2025-06-06 15:25:02.584 | INFO     | src.services.video_processing_service:merge_video_audio:172 - Successfully merged video and audio: static/results/d0cd1673_result.mp4
+2025-06-06 15:25:02.587 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:204 - Pipeline completed successfully: {'output_path': 'static/results/d0cd1673_result.mp4', 'processing_time': 10.892706871032715, 'inference_fps': 3.947595442447012, 'frames_processed': 43, 'fps': 25.0, 'model_type': 'wav2lip'}
+2025-06-06 15:25:02.588 | INFO     | src.services.wav2lip_pipeline_service:cleanup:335 - Cleaning up pipeline services...
+2025-06-06 15:25:02.591 | INFO     | src.services.face_detection_service:cleanup:200 - Face detector cleaned up
+2025-06-06 15:25:02.593 | INFO     | src.services.wav2lip_pipeline_service:cleanup:351 - Pipeline cleanup completed
+2025-06-06 15:25:02.594 | INFO     | app:generate_video:196 - Job d0cd1673 completed successfully: {'status': 'success', 'video_url': '/static/results/d0cd1673_result.mp4', 'total_processing_time': 10.92375636100769, 'pipeline_processing_time': 10.892706871032715, 'inference_fps': 3.947595442447012, 'frames_processed': 43, 'video_fps': 25.0, 'model_type': 'wav2lip', 'device_used': 'auto', 'job_id': 'd0cd1673'}
+2025-06-06 15:25:46.821 | INFO     | app:generate_video:140 - Processing job 21413946: video=4653_orig.mp4, audio=audio.wav
+2025-06-06 15:25:46.832 | INFO     | app:generate_video:155 - Files saved: video=132315 bytes, audio=118862 bytes
+2025-06-06 15:25:46.832 | INFO     | app:generate_video:164 - Starting pipeline processing with model: wav2lip
+2025-06-06 15:25:46.833 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:124 - Loading video frames...
+2025-06-06 15:25:46.847 | INFO     | src.services.video_processing_service:load_video_frames:57 - Reading video frames from: static/uploads/21413946.mp4 (FPS: 25.0)
+2025-06-06 15:25:46.892 | INFO     | src.services.video_processing_service:load_video_frames:86 - Loaded 147 frames from video
+2025-06-06 15:25:46.893 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:138 - Processing audio...
+2025-06-06 15:25:46.917 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:142 - Video frames: 147, Audio chunks: 43
+2025-06-06 15:25:46.918 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:149 - Adjusted to 43 frames/chunks
+2025-06-06 15:25:46.919 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:152 - Processing faces...
+2025-06-06 15:25:46.921 | INFO     | src.services.face_detection_service:process_video_frames:153 - Detecting faces in 43 frames...
+2025-06-06 15:25:47.249 | INFO     | src.services.face_detection_service:_initialize_detector:54 - Face detector initialized successfully
+2025-06-06 15:25:52.241 | INFO     | src.services.face_detection_service:process_video_frames:190 - Successfully processed 43 frames
+2025-06-06 15:25:52.241 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:161 - Generating lip-sync video with wav2lip...
+2025-06-06 15:25:52.242 | INFO     | src.services.wav2lip_pipeline_service:_get_wave2lip_servicer:78 - Initializing Wave2Lip servicer...
+2025-06-06 15:25:53.218 | INFO     | src.services.wav2lip_pipeline_service:_get_wave2lip_servicer:83 - Wave2Lip servicer initialized
+2025-06-06 15:25:55.409 | INFO     | src.services.video_processing_service:save_video_frames:131 - Video saved to: temp/temp_result.mp4 (43 frames, 25.0 FPS)
+2025-06-06 15:25:55.589 | INFO     | src.services.video_processing_service:merge_video_audio:172 - Successfully merged video and audio: static/results/21413946_result.mp4
+2025-06-06 15:25:55.591 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:204 - Pipeline completed successfully: {'output_path': 'static/results/21413946_result.mp4', 'processing_time': 8.757997989654541, 'inference_fps': 4.909797884264659, 'frames_processed': 43, 'fps': 25.0, 'model_type': 'wav2lip'}
+2025-06-06 15:25:55.592 | INFO     | src.services.wav2lip_pipeline_service:cleanup:335 - Cleaning up pipeline services...
+2025-06-06 15:25:55.594 | INFO     | src.services.face_detection_service:cleanup:200 - Face detector cleaned up
+2025-06-06 15:25:55.596 | INFO     | src.services.wav2lip_pipeline_service:cleanup:351 - Pipeline cleanup completed
+2025-06-06 15:25:55.598 | INFO     | app:generate_video:196 - Job 21413946 completed successfully: {'status': 'success', 'video_url': '/static/results/21413946_result.mp4', 'total_processing_time': 8.776701211929321, 'pipeline_processing_time': 8.757997989654541, 'inference_fps': 4.909797884264659, 'frames_processed': 43, 'video_fps': 25.0, 'model_type': 'wav2lip', 'device_used': 'auto', 'job_id': '21413946'}
+2025-06-06 15:26:37.888 | INFO     | app:generate_video:140 - Processing job 84ab0e5a: video=4653_orig.mp4, audio=audio.wav
+2025-06-06 15:26:37.898 | INFO     | app:generate_video:155 - Files saved: video=132315 bytes, audio=118862 bytes
+2025-06-06 15:26:37.900 | INFO     | app:generate_video:164 - Starting pipeline processing with model: nota_wav2lip
+2025-06-06 15:26:37.901 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:124 - Loading video frames...
+2025-06-06 15:26:37.913 | INFO     | src.services.video_processing_service:load_video_frames:57 - Reading video frames from: static/uploads/84ab0e5a.mp4 (FPS: 25.0)
+2025-06-06 15:26:37.944 | INFO     | src.services.video_processing_service:load_video_frames:86 - Loaded 147 frames from video
+2025-06-06 15:26:37.944 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:138 - Processing audio...
+2025-06-06 15:26:37.961 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:142 - Video frames: 147, Audio chunks: 43
+2025-06-06 15:26:37.963 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:149 - Adjusted to 43 frames/chunks
+2025-06-06 15:26:37.967 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:152 - Processing faces...
+2025-06-06 15:26:37.969 | INFO     | src.services.face_detection_service:process_video_frames:153 - Detecting faces in 43 frames...
+2025-06-06 15:26:38.188 | INFO     | src.services.face_detection_service:_initialize_detector:54 - Face detector initialized successfully
+2025-06-06 15:26:43.460 | INFO     | src.services.face_detection_service:process_video_frames:190 - Successfully processed 43 frames
+2025-06-06 15:26:43.461 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:161 - Generating lip-sync video with nota_wav2lip...
+2025-06-06 15:26:43.461 | INFO     | src.services.wav2lip_pipeline_service:_get_wave2lip_servicer:78 - Initializing Wave2Lip servicer...
+2025-06-06 15:26:44.458 | INFO     | src.services.wav2lip_pipeline_service:_get_wave2lip_servicer:83 - Wave2Lip servicer initialized
+2025-06-06 15:26:44.688 | INFO     | src.services.video_processing_service:save_video_frames:131 - Video saved to: temp/temp_result.mp4 (43 frames, 25.0 FPS)
+2025-06-06 15:26:44.881 | INFO     | src.services.video_processing_service:merge_video_audio:172 - Successfully merged video and audio: static/results/84ab0e5a_result.mp4
+2025-06-06 15:26:44.884 | INFO     | src.services.wav2lip_pipeline_service:process_video_audio:204 - Pipeline completed successfully: {'output_path': 'static/results/84ab0e5a_result.mp4', 'processing_time': 6.983122825622559, 'inference_fps': 6.157703519437447, 'frames_processed': 43, 'fps': 25.0, 'model_type': 'nota_wav2lip'}
+2025-06-06 15:26:44.884 | INFO     | src.services.wav2lip_pipeline_service:cleanup:335 - Cleaning up pipeline services...
+2025-06-06 15:26:44.885 | INFO     | src.services.face_detection_service:cleanup:200 - Face detector cleaned up
+2025-06-06 15:26:44.887 | INFO     | src.services.wav2lip_pipeline_service:cleanup:351 - Pipeline cleanup completed
+2025-06-06 15:26:44.888 | INFO     | app:generate_video:196 - Job 84ab0e5a completed successfully: {'status': 'success', 'video_url': '/static/results/84ab0e5a_result.mp4', 'total_processing_time': 7.000270366668701, 'pipeline_processing_time': 6.983122825622559, 'inference_fps': 6.157703519437447, 'frames_processed': 43, 'video_fps': 25.0, 'model_type': 'nota_wav2lip', 'device_used': 'auto', 'job_id': '84ab0e5a'}
