@@ -6,40 +6,46 @@
 
 ## GPU-Accelerated Real-Time Lip Sync Generation
 
-**ILLUMINUS Wav2Lip** là một ứng dụng web tiên tiến để tạo ra video lip-sync chất lượng cao với tốc độ xử lý nhanh. Ứng dụng tích hợp **face detection pipeline** và hỗ trợ **GPU acceleration** để đem lại trải nghiệm tốt nhất.
+**ILLUMINUS Wav2Lip** is an advanced web application for creating high-quality lip-sync videos with fast processing speed. The application integrates **face detection pipeline** and supports **GPU acceleration** for the best experience.
 
-### ✨ Tính năng nổi bật
+### ✨ Key Features
 
-- 🚀 **GPU Acceleration**: Hỗ trợ CUDA để xử lý nhanh gấp nhiều lần so với CPU
-- 🎯 **Advanced Face Detection**: Tích hợp S3FD face detection với batch processing
-- 🔧 **Modular Architecture**: Kiến trúc module hóa dễ bảo trì và mở rộng
-- 🎨 **Modern Web UI**: Giao diện web hiện đại với advanced options
-- 📊 **Real-time Metrics**: Hiển thị FPS, processing time và device usage
-- 🐳 **Docker Ready**: Triển khai đơn giản với Docker Compose
-- 📝 **Comprehensive Logging**: Logging chi tiết với rotation và retention
+- 🚀 **GPU Acceleration**: CUDA support for processing many times faster than CPU
+- 🎯 **Advanced Face Detection**: Integrated S3FD face detection with batch processing
+- 🔧 **Modular Architecture**: Modularized architecture for easy maintenance and expansion
+- 🎨 **Modern Web UI**: Modern web interface with advanced options
+- 📊 **Real-time Metrics**: Display FPS, processing time and device usage
+- 🐳 **Docker Ready**: Simple deployment with Docker Compose
+- 📝 **Comprehensive Logging**: Detailed logging with rotation and retention
+- ⚡ **WebSocket API**: Real-time processing with live progress updates
+- 🔄 **Auto-loop Mode**: Automatically loops video/images to match audio length
 
-### 🛠️ Kiến trúc hệ thống
+### 🛠️ System Architecture
 
 ```
 ILLUMINUS Wav2Lip/
 ├── 🎯 Face Detection Pipeline
 │   ├── S3FD Face Detection
-│   ├── Batch Processing với OOM Recovery
+│   ├── Batch Processing with OOM Recovery
 │   └── Temporal Smoothing
 ├── 🚀 Video Processing Pipeline  
 │   ├── Video Frame Loading/Saving
-│   ├── Audio Processing với FFmpeg
+│   ├── Audio Processing with FFmpeg
 │   └── Multiple Format Support
 ├── 🧠 AI Models
 │   ├── Original Wav2Lip Model
 │   └── Compressed Model (28× faster)
-└── 🌐 Web Application
-    ├── FastAPI Backend
-    ├── Modern React-style UI
-    └── Real-time Progress Tracking
+├── 🌐 Web Application
+│   ├── FastAPI Backend
+│   ├── Modern React-style UI
+│   └── Real-time Progress Tracking
+└── ⚡ WebSocket API
+    ├── Real-time Processing
+    ├── Live Progress Updates
+    └── Auto-loop Video Support
 ```
 
-### 🚀 Cài đặt và chạy
+### 🚀 Installation and Setup
 
 #### 📦 Docker Compose
 
@@ -48,54 +54,54 @@ ILLUMINUS Wav2Lip/
 git clone https://github.com/Zeres-Engel/ILLUMINUS.git
 cd ILLUMINUS
 
-# Chạy ứng dụng
+# Run application
 docker-compose up
 ```
 
-Vậy là xong! Ứng dụng sẽ chạy tại `http://localhost:8000`
+That's it! The application will run at `http://localhost:8000`
 
-### 🚀 Tải Model Tự Động
+### 🚀 Automatic Model Download
 
-**Bước 1: Tải tất cả models**
+**Step 1: Download all models**
 ```bash
-# Tự động tải tất cả models cần thiết
+# Automatically download all required models
 python scripts/download_models.py
 
-# Hoặc sử dụng script theo hệ điều hành
+# Or use OS-specific scripts
 scripts\download_models.bat       # Windows
 ./scripts/download_models.sh      # Unix/Linux/macOS
 ```
 
-**Bước 2: Tải models theo loại**
+**Step 2: Download models by category**
 ```bash
-# Chỉ tải Wav2Lip models
+# Download only Wav2Lip models
 python scripts/download_models.py --category wav2lip
 
-# Chỉ tải Face Detection model  
+# Download only Face Detection model  
 python scripts/download_models.py --category face_detection
 
-# Xem danh sách models có sẵn
+# View available models list
 python scripts/download_models.py --list
 ```
 
-### 💻 Sử dụng
+### 💻 Usage
 
 #### 🌐 Web Interface (Traditional)
 
-1. **Tải Models**: Chạy script tải model tự động (xem phía trên)
+1. **Download Models**: Run automatic model download script (see above)
 
-2. **Truy cập**: Mở browser và vào `http://localhost:8000`
+2. **Access**: Open browser and go to `http://localhost:8000`
 
 3. **Upload Files**:
-   - Upload video có chứa khuôn mặt
-   - Upload audio file để sync
+   - Upload video containing a face
+   - Upload audio file to sync
 
-4. **Cấu hình**:
-   - **Model**: Original Wav2Lip hoặc Compressed (28× faster)
+4. **Configuration**:
+   - **Model**: Original Wav2Lip or Compressed (28× faster)
    - **Device**: Auto/GPU/CPU
    - **Advanced Options**: Face detection settings, video processing
 
-5. **Generate**: Nhấn "Generate Video" và chờ kết quả
+5. **Generate**: Click "Generate Video" and wait for results
 
 #### ⚡ WebSocket API (Real-time)
 
@@ -105,35 +111,36 @@ python scripts/download_models.py --list
 # Test WebSocket connectivity
 python scripts/websocket_test_client.py
 
-# Process with audio + image
-python scripts/websocket_test_client.py --audio sample.wav --image person.jpg
+# Process with audio + video/image
+python scripts/websocket_test_client.py --audio sample.wav --video person.mp4
 
 # Browser test client
 curl http://localhost:8000/websocket-test
 ```
 
 **Features**:
-- **Real-time processing** với progress updates
-- **Base64 input/output** cho audio, image và video
+- **Real-time processing** with progress updates
+- **Base64 input/output** for audio, video and results
+- **Auto-loop support** for short videos/images
 - **Concurrent connections** support
-- **Error handling** và retry logic
+- **Error handling** and retry logic
 - **Performance metrics** tracking
 
 ### ⚙️ Advanced Options
 
 #### Face Detection Settings
-- **Padding**: Điều chỉnh vùng face detection (top, bottom, left, right)
-- **Batch Size**: Số frames xử lý cùng lúc (8, 16, 32)
-- **Smoothing**: Bật/tắt temporal smoothing
+- **Padding**: Adjust face detection area (top, bottom, left, right)
+- **Batch Size**: Number of frames processed simultaneously (8, 16, 32)
+- **Smoothing**: Enable/disable temporal smoothing
 
 #### Video Processing
-- **Resize Factor**: Giảm resolution để xử lý nhanh hơn
-- **Static Mode**: Sử dụng static image thay vì video
-- **Auto-rotation**: Tự động xoay video nếu cần
+- **Resize Factor**: Reduce resolution for faster processing
+- **Auto-loop Mode**: Automatically loop short videos/images to match audio
+- **Auto-rotation**: Automatically rotate video if needed
 
-### 🤖 Quản lý Models
+### 🤖 Model Management
 
-#### Cấu trúc Checkpoint Mới
+#### New Checkpoint Structure
 ```
 data/checkpoints/
 ├── 🎯 wav2lip/                    # Wav2Lip models
@@ -150,7 +157,7 @@ data/checkpoints/
 - **Full Setup**: ~230MB (all models)
 - **Recommended**: Keep both Wav2Lip models
 
-### 📁 Cấu trúc project
+### 📁 Project Structure
 
 ```
 ILLUMINUS/
@@ -159,6 +166,9 @@ ILLUMINUS/
 ├── 🔧 requirements.txt         # Python dependencies
 ├── 📋 config/                  # Configuration files
 ├── 🧩 src/                     # Source modules
+│   ├── routes/                 # API routes
+│   │   ├── websocket_api.py    # WebSocket real-time API
+│   │   └── rest_api.py         # REST API endpoints
 │   ├── services/               # Business logic services
 │   │   ├── face_detection_service.py
 │   │   ├── video_processing_service.py
@@ -166,16 +176,20 @@ ILLUMINUS/
 │   ├── models/                 # AI model wrappers
 │   ├── utils/                  # Utility functions
 │   └── config/                 # Config management
-├── 🎨 templates/               # Web UI templates
-├── 📁 static/                  # Static assets
+├── 🎨 frontend/                # Frontend assets
+│   ├── templates/              # HTML templates
+│   └── assets/                 # CSS/JS/Images
+├── 📁 static/                  # Static file storage
 ├── 📊 data/                    # Data and model management
 │   └── checkpoints/            # Organized AI model checkpoints
 ├── 📜 scripts/                 # Automation scripts
 │   ├── download_models.py      # Model download automation
+│   ├── websocket_test_client.py # WebSocket test client
 │   ├── download_models.bat     # Windows script
 │   └── download_models.sh      # Unix/Linux script
 ├── 🔍 face_detection/          # Face detection module
 ├── 🎬 nota_wav2lip/            # Wav2Lip implementation
+├── 📚 docs/                    # Documentation
 └── 📝 logs/                    # Application logs
 ```
 
@@ -187,26 +201,26 @@ ILLUMINUS/
 ```bash
 # Error: "Unsupported upgrade request" or "No WebSocket library detected"
 
-# Fix cho Docker:
+# Fix for Docker:
 scripts\fix_websocket_docker.bat
 
-# Fix cho Development:
+# Fix for Development:
 scripts\install_websocket_deps.bat
 
-# Hoặc manual install:
+# Or manual install:
 pip install "uvicorn[standard]" websockets
 ```
 
 **2. GPU not detected**
 ```bash
-# Check CUDA availability trong container
+# Check CUDA availability in container
 docker-compose exec illuminus python -c "import torch; print(torch.cuda.is_available())"
 ```
 
 **3. Out of memory errors**
-- Giảm `face_det_batch_size` từ 16 xuống 8 hoặc 4
-- Tăng `resize_factor` từ 1 lên 2 hoặc 4
-- Chuyển sang `cpu` mode
+- Reduce `face_det_batch_size` from 16 to 8 or 4
+- Increase `resize_factor` from 1 to 2 or 4
+- Switch to `cpu` mode
 
 **4. FFmpeg issues (Ubuntu/Linux)**
 ```bash
@@ -224,15 +238,15 @@ docker-compose up --build
 
 ### 🤝 Contributing
 
-1. Fork repository từ [https://github.com/Zeres-Engel/ILLUMINUS](https://github.com/Zeres-Engel/ILLUMINUS)
-2. Tạo feature branch (`git checkout -b feature/amazing-feature`)
+1. Fork repository from [https://github.com/Zeres-Engel/ILLUMINUS](https://github.com/Zeres-Engel/ILLUMINUS)
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit changes (`git commit -m 'Add amazing feature'`)
 4. Push branch (`git push origin feature/amazing-feature`)
-5. Tạo Pull Request
+5. Create Pull Request
 
 ### 📄 License
 
-Dự án được phát hành dưới **Apache License 2.0**
+This project is released under **Apache License 2.0**
 
 ### 🙏 Acknowledgments
 
