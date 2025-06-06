@@ -1,263 +1,1020 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="max-w-6xl mx-auto">
-    <!-- Hero Section -->
-    <div class="text-center py-12 px-4 sm:px-6 lg:px-8">
-        <h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
-            🌟 ILLUMINUS Wav2Lip
-        </h1>
-        <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-            Real-Time Lip Sync Generation với WebSocket API - GPU-Accelerated AI Processing
-        </p>
-        <div class="mt-6 flex justify-center space-x-4">
-            <div class="flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
-                <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                ⚡ Real-time WebSocket
-            </div>
-            <div class="flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                🎯 Advanced Face Detection
-            </div>
-            <div class="flex items-center px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
-                <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                📊 Live Progress Updates
-            </div>
-        </div>
-    </div>
-
-    <!-- Upload Section -->
-    <div class="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Generate Lip Sync Video</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌌 ILLUMINUS Wav2Lip - Cosmic AI Lip Sync</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="/frontend/assets/css/main.css" rel="stylesheet">
+    <style>
+        /* Cosmic Background & Particles */
+        body {
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a0b2e 25%, #16213e 50%, #0f3460 75%, #1a0b2e 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
         
-        <form id="uploadForm" enctype="multipart/form-data" class="space-y-6">
-            <!-- Video Upload -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    📹 Upload Video (or Image)
-                </label>
-                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md upload-zone">
-                    <div class="space-y-1 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <div class="flex text-sm text-gray-600">
-                            <label for="video-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                <span>Upload a file</span>
-                                <input id="video-upload" name="video" type="file" class="sr-only" accept="video/*,image/*" required>
-                            </label>
-                            <p class="pl-1">or drag and drop</p>
+        .cosmic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite alternate;
+        }
+        
+        .star:nth-child(1) { width: 2px; height: 2px; top: 20%; left: 20%; animation-delay: 0s; }
+        .star:nth-child(2) { width: 1px; height: 1px; top: 60%; left: 80%; animation-delay: 0.5s; }
+        .star:nth-child(3) { width: 3px; height: 3px; top: 80%; left: 30%; animation-delay: 1s; }
+        .star:nth-child(4) { width: 1px; height: 1px; top: 40%; left: 60%; animation-delay: 1.5s; }
+        .star:nth-child(5) { width: 2px; height: 2px; top: 10%; left: 90%; animation-delay: 2s; }
+        .star:nth-child(6) { width: 1px; height: 1px; top: 70%; left: 10%; animation-delay: 2.5s; }
+        .star:nth-child(7) { width: 2px; height: 2px; top: 30%; left: 50%; animation-delay: 3s; }
+        .star:nth-child(8) { width: 1px; height: 1px; top: 90%; left: 70%; animation-delay: 0.3s; }
+        .star:nth-child(9) { width: 3px; height: 3px; top: 50%; left: 15%; animation-delay: 0.8s; }
+        .star:nth-child(10) { width: 1px; height: 1px; top: 15%; left: 40%; animation-delay: 1.3s; }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .particle {
+            position: absolute;
+            background: linear-gradient(45deg, #00f5ff, #ff00ff, #00ff00);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .particle:nth-child(1) { width: 4px; height: 4px; top: 10%; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 6px; height: 6px; top: 80%; left: 90%; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 3px; height: 3px; top: 60%; left: 20%; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 5px; height: 5px; top: 30%; left: 80%; animation-delay: 1s; }
+        .particle:nth-child(5) { width: 2px; height: 2px; top: 90%; left: 50%; animation-delay: 3s; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        /* Cosmic Cards & Elements */
+        .cosmic-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+                        0 0 40px rgba(0, 245, 255, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cosmic-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .cosmic-card:hover::before {
+            left: 100%;
+        }
+        
+        .cosmic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 
+                        0 0 60px rgba(0, 245, 255, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Neon Text Effects */
+        .neon-title {
+            background: linear-gradient(45deg, #00f5ff, #ff00ff, #00ff00, #ffff00);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .cosmic-subtitle {
+            color: #b794f6;
+            text-shadow: 0 0 20px rgba(183, 148, 246, 0.5);
+        }
+        
+        /* Cosmic Buttons */
+        .cosmic-btn {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+        }
+        
+        .cosmic-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .cosmic-btn:hover::before {
+            left: 100%;
+        }
+        
+        .cosmic-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        .cosmic-btn:active {
+            transform: translateY(0);
+        }
+        
+        .cosmic-btn-primary {
+            background: linear-gradient(45deg, #ff00ff 0%, #00f5ff 100%);
+            box-shadow: 0 4px 15px rgba(255, 0, 255, 0.3);
+        }
+        
+        .cosmic-btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(255, 0, 255, 0.5);
+        }
+        
+        .cosmic-btn-success {
+            background: linear-gradient(45deg, #00ff88 0%, #00ccff 100%);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+        
+        /* Cosmic Upload Zone */
+        .cosmic-upload-zone {
+            border: 2px dashed rgba(0, 245, 255, 0.5);
+            background: rgba(0, 245, 255, 0.05);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .cosmic-upload-zone:hover,
+        .cosmic-upload-zone.dragover {
+            border-color: #00f5ff;
+            background: rgba(0, 245, 255, 0.1);
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.2);
+        }
+        
+        /* Cosmic Progress Bar */
+        .cosmic-progress {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .cosmic-progress-bar {
+            background: linear-gradient(45deg, #ff00ff, #00f5ff, #00ff88);
+            background-size: 200% 200%;
+            animation: progressGlow 2s ease-in-out infinite;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        
+        .cosmic-progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: progressShine 1s infinite;
+        }
+        
+        @keyframes progressGlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* Cosmic Form Elements */
+        .cosmic-input, .cosmic-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .cosmic-input:focus, .cosmic-select:focus {
+            outline: none;
+            border-color: #00f5ff;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .cosmic-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Cosmic Select Dropdown Options */
+        .cosmic-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2300f5ff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+        
+        .cosmic-select option {
+            background: #1a0b2e;
+            color: #e2e8f0;
+            padding: 10px 12px;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .cosmic-select option:checked {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .cosmic-select option:hover {
+            background: rgba(0, 245, 255, 0.1);
+            color: #00f5ff;
+        }
+        
+        /* Enhanced cosmic select styling */
+        .cosmic-select:hover {
+            border-color: #00f5ff;
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.2);
+        }
+        
+        .cosmic-select:focus {
+            border-color: #00f5ff;
+            box-shadow: 0 0 25px rgba(0, 245, 255, 0.4);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        /* Cosmic Labels */
+        .cosmic-label {
+            color: #e2e8f0;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        /* Results Section */
+        .cosmic-result {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 245, 255, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(0, 245, 255, 0.1);
+        }
+        
+        /* Status Indicators */
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-ready { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .status-processing { background: #ffff00; box-shadow: 0 0 10px #ffff00; }
+        .status-complete { background: #00f5ff; box-shadow: 0 0 10px #00f5ff; }
+        .status-error { background: #ff4757; box-shadow: 0 0 10px #ff4757; }
+        
+        /* Cosmic Animations */
+        @keyframes cosmic-fade-in {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .cosmic-fade-in {
+            animation: cosmic-fade-in 0.8s ease forwards;
+        }
+        
+        /* Responsive Design */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        
+        /* Header spacing */
+        .cosmic-header {
+            padding: 2rem 0 3rem 0;
+            margin: 1rem 0 2rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .cosmic-card {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .neon-title {
+                font-size: 2rem;
+            }
+            
+            .main-container {
+                padding: 0 1rem;
+            }
+            
+            .cosmic-header {
+                padding: 1.5rem 0 2rem 0;
+                margin: 0.5rem 0 1.5rem 0;
+            }
+        }
+        
+        /* Advanced Options Panel */
+        .cosmic-advanced {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .advanced-options {
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        
+        .advanced-options.show {
+            max-height: 1000px;
+            opacity: 1;
+        }
+        
+        /* File preview enhancements */
+        .file-preview-cosmic {
+            border: 2px solid rgba(0, 245, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.1);
+        }
+        
+        /* Dark theme text colors */
+        .text-cosmic-primary { color: #e2e8f0; }
+        .text-cosmic-secondary { color: #a0aec0; }
+        .text-cosmic-accent { color: #00f5ff; }
+        
+        /* Layout specific */
+        .cosmic-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+            margin-top: 1rem;
+        }
+        
+        @media (min-width: 1024px) {
+            .cosmic-layout {
+                grid-template-columns: 1fr 400px;
+                gap: 3rem;
+            }
+        }
+        
+        /* Content spacing improvements */
+        .cosmic-content {
+            padding: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .cosmic-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cosmic Background -->
+    <div class="cosmic-bg">
+        <div class="stars">
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+        </div>
+        <div class="floating-particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+    </div>
+
+    <div class="main-container py-8 relative z-10">
+        <!-- Cosmic Header -->
+        <div class="text-center cosmic-header cosmic-fade-in">
+            <h1 class="text-4xl md:text-6xl font-bold neon-title mb-4">
+                🌌 ILLUMINUS Wav2Lip
+            </h1>
+            <p class="text-lg md:text-xl cosmic-subtitle mb-8">
+                ✨ Advanced AI-Powered Lip Synchronization in the Cosmic Web ✨
+            </p>
+            
+            <!-- Status Banner -->
+            <div class="inline-flex items-center px-6 py-3 cosmic-card mb-6">
+                <span id="statusIndicator" class="status-indicator status-ready"></span>
+                <span id="statusText" class="text-cosmic-primary font-medium">🚀 Ready for Cosmic Processing</span>
+            </div>
+        </div>
+
+        <div class="cosmic-layout">
+            <!-- Main Content Area -->
+            <div class="space-y-8 cosmic-content">
+                <!-- File Upload Section -->
+                <div class="cosmic-card p-6 md:p-8 cosmic-fade-in">
+                    <h2 class="text-2xl md:text-3xl font-bold text-cosmic-primary mb-6 md:mb-8 flex items-center">
+                        🎬 Upload Your Cosmic Files
+                        <span class="ml-4 text-sm md:text-lg font-normal text-cosmic-secondary">(Video + Audio)</span>
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                        <!-- Video Upload -->
+                        <div>
+                            <label class="cosmic-label">🎥 Video or Image File</label>
+                            <div class="cosmic-upload-zone border-2 border-dashed p-6 md:p-8 text-center" id="videoDropZone">
+                                <div class="space-y-4">
+                                    <svg class="mx-auto h-12 md:h-16 w-12 md:w-16 text-cosmic-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16l13-8L7 4z" />
+                                    </svg>
+                                    <div class="flex flex-col md:flex-row text-base md:text-lg text-cosmic-primary">
+                                        <label for="videoFile" class="relative cursor-pointer cosmic-btn-primary rounded-lg px-4 py-2 mb-2 md:mb-0">
+                                            <span>🌟 Choose Video/Image</span>
+                                            <input id="videoFile" type="file" class="sr-only" accept="video/*,image/*">
+                                        </label>
+                                        <p class="md:pl-4 self-center">or drag cosmic files here</p>
+                                    </div>
+                                    <p class="text-sm text-cosmic-secondary">MP4, AVI, MOV, JPG, PNG up to 100MB</p>
+                                </div>
+                                <div id="videoPreview" class="hidden mt-6">
+                                    <div id="videoPreviewContainer" class="file-preview-cosmic"></div>
+                                    <p id="videoFileName" class="text-cosmic-accent font-medium mt-3"></p>
+                                </div>
+                            </div>
                         </div>
-                        <p class="text-xs text-gray-500">MP4, AVI, JPG, PNG up to 10MB</p>
+                        
+                        <!-- Audio Upload -->
+                        <div>
+                            <label class="cosmic-label">🎵 Audio File</label>
+                            <div class="cosmic-upload-zone border-2 border-dashed p-6 md:p-8 text-center" id="audioDropZone">
+                                <div class="space-y-4">
+                                    <svg class="mx-auto h-12 md:h-16 w-12 md:w-16 text-cosmic-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                    </svg>
+                                    <div class="flex flex-col md:flex-row text-base md:text-lg text-cosmic-primary">
+                                        <label for="audioFile" class="relative cursor-pointer cosmic-btn-primary rounded-lg px-4 py-2 mb-2 md:mb-0">
+                                            <span>🎶 Choose Audio</span>
+                                            <input id="audioFile" type="file" class="sr-only" accept="audio/*">
+                                        </label>
+                                        <p class="md:pl-4 self-center">or drag cosmic sounds here</p>
+                                    </div>
+                                    <p class="text-sm text-cosmic-secondary">MP3, WAV, M4A up to 50MB</p>
+                                </div>
+                                <div id="audioPreview" class="hidden mt-6">
+                                    <audio id="audioPlayer" controls class="w-full file-preview-cosmic"></audio>
+                                    <p id="audioFileName" class="text-cosmic-accent font-medium mt-3"></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Audio Upload -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    🎵 Upload Audio
-                </label>
-                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md upload-zone">
-                    <div class="space-y-1 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                        </svg>
-                        <div class="flex text-sm text-gray-600">
-                            <label for="audio-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                <span>Upload a file</span>
-                                <input id="audio-upload" name="audio" type="file" class="sr-only" accept="audio/*" required>
-                            </label>
-                            <p class="pl-1">or drag and drop</p>
-                        </div>
-                        <p class="text-xs text-gray-500">MP3, WAV up to 10MB</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Model Selection -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label for="model" class="block text-sm font-medium text-gray-700 mb-2">🤖 AI Model</label>
-                <select id="model" name="model" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                    <option value="original">Original Wav2Lip (High Quality)</option>
-                    <option value="compressed">Compressed Wav2Lip (28× Faster)</option>
-                </select>
-                </div>
-                <div>
-                    <label for="device" class="block text-sm font-medium text-gray-700 mb-2">⚡ Processing Device</label>
-                    <select id="device" name="device" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                        <option value="auto">🔮 Auto (GPU if available)</option>
-                        <option value="cuda">🚀 GPU (CUDA)</option>
-                        <option value="cpu">🖥️ CPU Only</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Advanced Options (Collapsible) -->
-            <div class="border rounded-lg p-4 bg-gray-50">
-                <button type="button" id="toggleAdvanced" class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 hover:text-gray-900">
-                    <span>🔧 Advanced Options</span>
-                    <svg class="w-5 h-5 transform transition-transform" id="advancedIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
-                
-                <div id="advancedOptions" class="hidden mt-4 space-y-4">
-                    <!-- Face Detection Options -->
-                    <div class="grid grid-cols-2 gap-4">
+                <!-- Processing Options -->
+                <div class="cosmic-card p-6 md:p-8 cosmic-fade-in">
+                    <h2 class="text-2xl md:text-3xl font-bold text-cosmic-primary mb-6 md:mb-8 flex items-center justify-between">
+                        <span>⚙️ Cosmic Configuration</span>
+                        <button id="toggleAdvanced" class="text-sm md:text-lg text-cosmic-accent hover:text-white transition-colors flex items-center cosmic-btn">
+                            <span>🔬 Advanced Settings</span>
+                            <svg id="advancedIcon" class="w-4 md:w-6 h-4 md:h-6 ml-2 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </h2>
+                    
+                    <!-- Basic Options -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
                         <div>
-                            <label for="pads_top" class="block text-xs font-medium text-gray-600 mb-1">Padding Top</label>
-                            <input type="number" id="pads_top" name="pads_top" value="0" min="0" max="50" class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label for="pads_bottom" class="block text-xs font-medium text-gray-600 mb-1">Padding Bottom</label>
-                            <input type="number" id="pads_bottom" name="pads_bottom" value="10" min="0" max="50" class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label for="pads_left" class="block text-xs font-medium text-gray-600 mb-1">Padding Left</label>
-                            <input type="number" id="pads_left" name="pads_left" value="0" min="0" max="50" class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label for="pads_right" class="block text-xs font-medium text-gray-600 mb-1">Padding Right</label>
-                            <input type="number" id="pads_right" name="pads_right" value="0" min="0" max="50" class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                        </div>
-                    </div>
-
-                    <!-- Processing Options -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="resize_factor" class="block text-xs font-medium text-gray-600 mb-1">Resize Factor</label>
-                            <select id="resize_factor" name="resize_factor" class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                                <option value="1">1x (Original)</option>
-                                <option value="2">2x (Half size)</option>
-                                <option value="4">4x (Quarter size)</option>
+                            <label class="cosmic-label">🤖 AI Model</label>
+                            <select id="modelType" class="cosmic-select w-full">
+                                <option value="compressed" selected>⚡ Compressed Wav2Lip (28× Faster)</option>
+                                <option value="original">💎 Original Wav2Lip (Higher Quality)</option>
                             </select>
                         </div>
                         <div>
-                            <label for="face_det_batch_size" class="block text-xs font-medium text-gray-600 mb-1">Face Det Batch Size</label>
-                            <select id="face_det_batch_size" name="face_det_batch_size" class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                                <option value="8">8</option>
-                                <option value="16" selected>16</option>
-                                <option value="32">32</option>
+                            <label class="cosmic-label">🚀 Processing Device</label>
+                            <select id="deviceType" class="cosmic-select w-full">
+                                <option value="auto" selected>🔮 Auto (GPU if available)</option>
+                                <option value="cuda">⚡ GPU (CUDA)</option>
+                                <option value="cpu">🖥️ CPU Only</option>
                             </select>
                         </div>
                     </div>
-
-                    <!-- Checkboxes -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="static" name="static" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                            <label for="static" class="ml-2 text-xs font-medium text-gray-600">Static Image Mode</label>
+                    
+                    <!-- Advanced Options -->
+                    <div id="advancedOptions" class="advanced-options">
+                        <div class="cosmic-advanced p-6">
+                            <div class="space-y-6">
+                                <h3 class="text-xl font-bold text-cosmic-accent mb-4">🎯 Face Detection Settings</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                    <div>
+                                        <label class="cosmic-label text-sm">Padding Top</label>
+                                        <input type="number" id="padTop" value="0" min="0" max="50" class="cosmic-input w-full">
+                                    </div>
+                                    <div>
+                                        <label class="cosmic-label text-sm">Padding Bottom</label>
+                                        <input type="number" id="padBottom" value="10" min="0" max="50" class="cosmic-input w-full">
+                                    </div>
+                                    <div>
+                                        <label class="cosmic-label text-sm">Padding Left</label>
+                                        <input type="number" id="padLeft" value="0" min="0" max="50" class="cosmic-input w-full">
+                                    </div>
+                                    <div>
+                                        <label class="cosmic-label text-sm">Padding Right</label>
+                                        <input type="number" id="padRight" value="0" min="0" max="50" class="cosmic-input w-full">
+                                    </div>
+                                </div>
+                                
+                                <h3 class="text-xl font-bold text-cosmic-accent mb-4">🔧 Video Processing</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                    <div>
+                                        <label class="cosmic-label text-sm">Resize Factor</label>
+                                        <select id="resizeFactor" class="cosmic-select w-full">
+                                            <option value="1">1× (Original size)</option>
+                                            <option value="2" selected>2× (Half size, faster)</option>
+                                            <option value="4">4× (Quarter size, fastest)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="cosmic-label text-sm">Face Detection Batch</label>
+                                        <select id="faceBatchSize" class="cosmic-select w-full">
+                                            <option value="8">8 (Balanced)</option>
+                                            <option value="16" selected>16 (Default)</option>
+                                            <option value="32">32 (High performance)</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex flex-col space-y-3 pt-6">
+                                        <label class="flex items-center text-cosmic-primary">
+                                            <input type="checkbox" id="staticMode" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-3">
+                                            <span class="text-sm">🖼️ Static Mode</span>
+                                        </label>
+                                        <label class="flex items-center text-cosmic-primary">
+                                            <input type="checkbox" id="noSmooth" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-3">
+                                            <span class="text-sm">⚡ No Smoothing</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-center">
-                            <input type="checkbox" id="nosmooth" name="nosmooth" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                            <label for="nosmooth" class="ml-2 text-xs font-medium text-gray-600">No Face Smoothing</label>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <div class="text-center">
+                        <button id="generateBtn" class="cosmic-btn-primary px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                            <span class="flex items-center justify-center">
+                                <svg class="hidden animate-spin -ml-1 mr-3 h-5 md:h-6 w-5 md:w-6 text-white" id="loadingSpinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span id="generateText">🚀 Generate Cosmic Video</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="progressSection" class="hidden cosmic-card p-6 md:p-8 cosmic-fade-in">
+                    <h2 class="text-2xl md:text-3xl font-bold text-cosmic-primary mb-6">🌟 Cosmic Processing</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between text-base md:text-lg text-cosmic-primary mb-3">
+                                <span id="progressText">Initializing cosmic algorithms...</span>
+                                <span id="progressPercent">0%</span>
+                            </div>
+                            <div class="cosmic-progress h-4 md:h-6">
+                                <div id="progressBar" class="cosmic-progress-bar h-4 md:h-6 rounded-lg" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            <div class="cosmic-advanced p-4 rounded-lg">
+                                <div class="text-xl md:text-2xl font-bold text-cosmic-accent" id="processingTime">0s</div>
+                                <div class="text-xs md:text-sm text-cosmic-secondary">⏱️ Time Elapsed</div>
+                            </div>
+                            <div class="cosmic-advanced p-4 rounded-lg">
+                                <div class="text-xl md:text-2xl font-bold text-cosmic-accent" id="framesProcessed">0</div>
+                                <div class="text-xs md:text-sm text-cosmic-secondary">🎬 Frames Done</div>
+                            </div>
+                            <div class="cosmic-advanced p-4 rounded-lg">
+                                <div class="text-xl md:text-2xl font-bold text-cosmic-accent" id="inferenceSpeed">0</div>
+                                <div class="text-xs md:text-sm text-cosmic-secondary">⚡ FPS</div>
+                            </div>
+                            <div class="cosmic-advanced p-4 rounded-lg">
+                                <div class="text-xl md:text-2xl font-bold text-cosmic-accent" id="deviceUsed">-</div>
+                                <div class="text-xs md:text-sm text-cosmic-secondary">🔧 Device</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultSection" class="hidden cosmic-card p-6 md:p-8 cosmic-fade-in">
+                    <h2 class="text-2xl md:text-3xl font-bold text-cosmic-primary mb-6 md:mb-8">🎬 Cosmic Results</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-6 md:mb-8">
+                        <div class="cosmic-result p-4 md:p-6">
+                            <h3 class="text-lg md:text-xl font-bold text-cosmic-accent mb-4">📥 Original Video</h3>
+                            <video id="originalVideo" controls class="w-full rounded-lg file-preview-cosmic">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        <div class="cosmic-result p-4 md:p-6">
+                            <h3 class="text-lg md:text-xl font-bold text-cosmic-accent mb-4">✨ Generated Result</h3>
+                            <video id="resultVideo" controls class="w-full rounded-lg file-preview-cosmic">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    </div>
+                    
+                    <!-- Result Actions -->
+                    <div class="flex flex-wrap gap-4 justify-center">
+                        <button id="downloadBtn" class="cosmic-btn-success px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-bold rounded-xl">
+                            📥 Download Cosmic Result
+                        </button>
+                        <button id="newVideoBtn" class="cosmic-btn px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-bold rounded-xl">
+                            🔄 Create New Cosmic Video
+                        </button>
+                        <a href="/websocket-test" class="cosmic-btn px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-bold rounded-xl">
+                            🧪 Try WebSocket API
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="space-y-6 md:space-y-8 cosmic-content">
+                <!-- How It Works -->
+                <div class="cosmic-card p-4 md:p-6 cosmic-fade-in">
+                    <h2 class="text-xl md:text-2xl font-bold text-cosmic-primary mb-4 md:mb-6">🌟 How It Works</h2>
+                    <div class="space-y-3 md:space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 md:w-8 h-6 md:h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-sm md:text-base font-bold">1</div>
+                            <div>
+                                <h4 class="font-medium text-cosmic-primary text-sm md:text-base">Upload Files</h4>
+                                <p class="text-xs md:text-sm text-cosmic-secondary">Upload your video and audio files to the cosmic processor</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 md:w-8 h-6 md:h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-sm md:text-base font-bold">2</div>
+                            <div>
+                                <h4 class="font-medium text-cosmic-primary text-sm md:text-base">Configure AI</h4>
+                                <p class="text-xs md:text-sm text-cosmic-secondary">Choose your model and processing settings</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 md:w-8 h-6 md:h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white text-sm md:text-base font-bold">3</div>
+                            <div>
+                                <h4 class="font-medium text-cosmic-primary text-sm md:text-base">AI Processing</h4>
+                                <p class="text-xs md:text-sm text-cosmic-secondary">Our cosmic AI synchronizes lips with audio</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 md:w-8 h-6 md:h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white text-sm md:text-base font-bold">4</div>
+                            <div>
+                                <h4 class="font-medium text-cosmic-primary text-sm md:text-base">Download Result</h4>
+                                <p class="text-xs md:text-sm text-cosmic-secondary">Get your perfectly lip-synced cosmic video</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="cosmic-card p-4 md:p-6 cosmic-fade-in">
+                    <h2 class="text-xl md:text-2xl font-bold text-cosmic-primary mb-4 md:mb-6">⚡ Cosmic Features</h2>
+                    <div class="space-y-2 md:space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span class="text-cosmic-primary text-sm md:text-base">🚀 GPU Acceleration</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span class="text-cosmic-primary text-sm md:text-base">🎯 Advanced Face Detection</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span class="text-cosmic-primary text-sm md:text-base">⚡ Real-time Processing</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span class="text-cosmic-primary text-sm md:text-base">🌟 Multiple AI Models</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span class="text-cosmic-primary text-sm md:text-base">🔧 Customizable Settings</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            <span class="text-cosmic-primary text-sm md:text-base">📱 Responsive Design</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="cosmic-card p-4 md:p-6 cosmic-fade-in">
+                    <h2 class="text-xl md:text-2xl font-bold text-cosmic-primary mb-4 md:mb-6">🖥️ Cosmic System</h2>
+                    <div class="space-y-3 md:space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-cosmic-secondary text-sm md:text-base">API Status</span>
+                            <span class="text-green-400 flex items-center text-sm md:text-base">
+                                <span class="status-indicator status-ready mr-2"></span>
+                                Online
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-cosmic-secondary text-sm md:text-base">GPU Support</span>
+                            <span id="gpuStatus" class="text-cosmic-accent text-sm md:text-base">Detecting...</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-cosmic-secondary text-sm md:text-base">Models Loaded</span>
+                            <span class="text-cosmic-accent text-sm md:text-base">2/2</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-cosmic-secondary text-sm md:text-base">Server Load</span>
+                            <span class="text-green-400 text-sm md:text-base">Low</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cosmic Footer -->
+    <footer class="relative z-10 mt-16">
+        <div class="main-container">
+            <!-- Main Footer Content -->
+            <div class="cosmic-card p-8 md:p-12 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- About Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold neon-title mb-4">🌌 ILLUMINUS</h3>
+                        <p class="text-cosmic-secondary text-sm leading-relaxed">
+                            Advanced AI-powered lip synchronization platform powered by cosmic technology. 
+                            Transform your videos with cutting-edge Wav2Lip AI models.
+                        </p>
+                        <div class="flex space-x-4">
+                            <a href="https://github.com/Zeres-Engel/ILLUMINUS" target="_blank" class="cosmic-btn px-4 py-2 text-sm">
+                                🐙 GitHub
+                            </a>
+                            <a href="/websocket-test" class="cosmic-btn px-4 py-2 text-sm">
+                                🧪 WebSocket API
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Features Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-bold text-cosmic-accent mb-4">⚡ Features</h3>
+                        <ul class="space-y-2 text-sm text-cosmic-secondary">
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-cosmic-accent rounded-full mr-3"></span>
+                                GPU Acceleration
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-cosmic-accent rounded-full mr-3"></span>
+                                Real-time Processing
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-cosmic-accent rounded-full mr-3"></span>
+                                WebSocket API
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-cosmic-accent rounded-full mr-3"></span>
+                                Multiple AI Models
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-cosmic-accent rounded-full mr-3"></span>
+                                Advanced Face Detection
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Technology Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-bold text-cosmic-accent mb-4">🔬 Technology</h3>
+                        <ul class="space-y-2 text-sm text-cosmic-secondary">
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                                FastAPI Backend
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                                PyTorch AI Models
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                                S3FD Face Detection
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                                Docker Support
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
+                                CUDA Optimization
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Contact & Support -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-bold text-cosmic-accent mb-4">📞 Support</h3>
+                        <div class="space-y-3 text-sm text-cosmic-secondary">
+                            <div class="flex items-center">
+                                <span class="text-cosmic-accent mr-2">📧</span>
+                                <a href="mailto:ngpthanh15@gmail.com" class="hover:text-cosmic-accent transition-colors">
+                                    ngpthanh15@gmail.com
+                                </a>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-cosmic-accent mr-2">🌐</span>
+                                <a href="https://github.com/Zeres-Engel" target="_blank" class="hover:text-cosmic-accent transition-colors">
+                                    @Zeres-Engel
+                                </a>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-cosmic-accent mr-2">📚</span>
+                                <span>Documentation</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-cosmic-accent mr-2">🐛</span>
+                                <a href="https://github.com/Zeres-Engel/ILLUMINUS/issues" target="_blank" class="hover:text-cosmic-accent transition-colors">
+                                    Report Issues
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Separator -->
+                <div class="border-t border-cosmic-accent/20 my-8"></div>
+
+                <!-- Performance Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                    <div class="text-center cosmic-advanced p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-cosmic-accent">28×</div>
+                        <div class="text-xs text-cosmic-secondary">Faster Processing</div>
+                    </div>
+                    <div class="text-center cosmic-advanced p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-cosmic-accent">139MB</div>
+                        <div class="text-xs text-cosmic-secondary">Original Model</div>
+                    </div>
+                    <div class="text-center cosmic-advanced p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-cosmic-accent">4.9MB</div>
+                        <div class="text-xs text-cosmic-secondary">Compressed Model</div>
+                    </div>
+                    <div class="text-center cosmic-advanced p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-cosmic-accent">∞</div>
+                        <div class="text-xs text-cosmic-secondary">Possibilities</div>
+                    </div>
+                </div>
+
+                <!-- Acknowledgments -->
+                <div class="bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg p-6 mb-8">
+                    <h4 class="text-lg font-bold text-cosmic-accent mb-4">🙏 Acknowledgments</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-cosmic-secondary">
+                        <div>
+                            <p class="mb-2">
+                                <span class="text-cosmic-accent">•</span> 
+                                <a href="https://github.com/Rudrabha/Wav2Lip" target="_blank" class="hover:text-cosmic-accent transition-colors">
+                                    Rudrabha Mukhopadhyay
+                                </a> - Original Wav2Lip
+                            </p>
+                            <p>
+                                <span class="text-cosmic-accent">•</span>
+                                <a href="https://github.com/1adrianb/face-alignment" target="_blank" class="hover:text-cosmic-accent transition-colors">
+                                    Adrian Bulat
+                                </a> - Face Alignment Library
+                            </p>
+                        </div>
+                        <div>
+                            <p class="mb-2">
+                                <span class="text-cosmic-accent">•</span>
+                                Research papers and AI community
+                            </p>
+                            <p>
+                                <span class="text-cosmic-accent">•</span>
+                                Open-source contributors worldwide
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Submit Button -->
-            <div class="flex justify-center">
-                <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="spinner">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 818-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    🚀 Generate Video
-                </button>
-            </div>
-        </form>
-    </div>
+            <!-- Bottom Footer -->
+            <div class="cosmic-card p-6">
+                <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                    <!-- Copyright -->
+                    <div class="text-cosmic-secondary text-sm">
+                        <p>© 2024 ILLUMINUS Wav2Lip. Made with ❤️ by 
+                            <span class="text-cosmic-accent font-medium">Andrew</span>
+                        </p>
+                        <p class="text-xs mt-1">Powered by cosmic AI technology ✨</p>
+                    </div>
 
-    <!-- Results Section (initially hidden) -->
-    <div id="results" class="hidden bg-white shadow rounded-lg p-6 mb-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Results</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="result-card bg-gray-50 p-4 rounded-lg">
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Original Video</h3>
-                <video id="originalVideo" controls class="w-full rounded-lg"></video>
+                    <!-- License & Version -->
+                    <div class="flex items-center space-x-6 text-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="cosmic-btn px-3 py-1 text-xs">v2.0.0</span>
+                            <span class="text-cosmic-secondary">•</span>
+                            <a href="https://opensource.org/licenses/Apache-2.0" target="_blank" class="cosmic-btn px-3 py-1 text-xs">
+                                Apache 2.0
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="flex items-center space-x-3">
+                        <a href="https://github.com/Zeres-Engel/ILLUMINUS" target="_blank" class="cosmic-btn px-3 py-2 text-sm hover:scale-110 transition-transform">
+                            🌟 Star on GitHub
+                        </a>
+                        <a href="https://github.com/Zeres-Engel" target="_blank" class="cosmic-btn px-3 py-2 text-sm hover:scale-110 transition-transform">
+                            👨‍💻 Follow Dev
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="result-card bg-gray-50 p-4 rounded-lg">
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Generated Video</h3>
-                <video id="resultVideo" controls class="w-full rounded-lg"></video>
-            </div>
-        </div>
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div class="bg-indigo-50 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-indigo-600" id="processingTime">-</div>
-                <div class="text-sm text-gray-600">⏱️ Processing Time</div>
-            </div>
-            <div class="bg-green-50 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-green-600" id="inferenceSpeed">-</div>
-                <div class="text-sm text-gray-600">🚀 Inference FPS</div>
-            </div>
-            <div class="bg-purple-50 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-purple-600" id="modelUsed">-</div>
-                <div class="text-sm text-gray-600">🤖 AI Model Used</div>
-            </div>
-        </div>
-        <div class="mt-6 flex justify-center items-center space-x-4">
-            <div class="text-sm text-gray-500">
-                <p>🎬 Frames: <span id="framesProcessed">-</span> | 📹 FPS: <span id="videoFps">-</span> | 💻 Device: <span id="deviceUsed">-</span></p>
-            </div>
-        </div>
-        <div class="mt-6 flex justify-center space-x-3">
-            <button id="downloadBtn" class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                📥 Download Result
-            </button>
-            <button id="resetBtn" class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                🔄 New Generation
+
+            <!-- Floating Back to Top -->
+            <button id="backToTop" class="hidden fixed bottom-8 right-8 z-50 cosmic-btn-primary p-3 rounded-full shadow-lg hover:scale-110 transition-all">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
             </button>
         </div>
-    </div>
+    </footer>
 
-    <!-- How It Works Section -->
-    <div id="how-it-works" class="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">How It Works (WebSocket API)</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="text-center p-4">
-                <div class="bg-indigo-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                    <svg class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">1. Upload Files</h3>
-                <p class="text-gray-600">Upload video/image and audio files. WebSocket connection is established automatically.</p>
-            </div>
-            <div class="text-center p-4">
-                <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                    <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">2. Real-time Processing</h3>
-                <p class="text-gray-600">Files are converted to base64 and sent via WebSocket for real-time processing.</p>
-            </div>
-            <div class="text-center p-4">
-                <div class="bg-yellow-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                    <svg class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">3. Live Progress</h3>
-                <p class="text-gray-600">Watch real-time progress updates as the AI processes your lip-sync request.</p>
-            </div>
-            <div class="text-center p-4">
-                <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                    <svg class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">4. Instant Results</h3>
-                <p class="text-gray-600">Receive your lip-synced video instantly via WebSocket for immediate viewing and download.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Load the modular JavaScript -->
-<script src="/frontend/assets/js/main.js"></script>
-{% endblock %}
+    <script src="/frontend/assets/js/main.js"></script>
+</body>
+</html>

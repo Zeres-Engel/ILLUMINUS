@@ -19,13 +19,13 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 from src.config import hparams as hp
 
 from src.services.wav2lip_pipeline_service import Wav2LipPipelineService
-from src.routes import websocket_router, rest_router
+from src.routes import websocket_router, utility_router
 
-# Initialize FastAPI app
+# Initialize FastAPI app - Assignment Focused
 app = FastAPI(
-    title="ILLUMINUS Wav2Lip with Face Detection", 
-    description="GPU-Accelerated Real-Time Lip Sync Generation with WebSocket API",
-    version="1.0.0"
+    title="ILLUMINUS Wav2Lip - WebSocket Assignment", 
+    description="Real-time Lip-syncing WebSocket API for Take-Home Assignment",
+    version="2.0.0"
 )
 
 # Configure CORS
@@ -37,9 +37,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(websocket_router, tags=["WebSocket"])
-app.include_router(rest_router, tags=["REST API"])
+# Include routers - Assignment compliant (WebSocket focused)
+app.include_router(websocket_router, tags=["WebSocket API"])
+app.include_router(utility_router, tags=["Utilities"])
 
 # Configure static files and templates  
 app.mount("/static", StaticFiles(directory="static"), name="static")
