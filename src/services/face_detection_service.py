@@ -1,0 +1,203 @@
+"""
+Face Detection Service với batch processing
+Tích hợp face detection vào pipeline Wave2Lip
+"""
+
+import os
+import cv2
+import numpy as np
+import torch
+import sys
+from typing import List, Tuple, Optional, Union
+from pathlib import Path
+from loguru import logger
+
+# Add root path to import face_detection
+root_path = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(root_path))
+
+import face_detection
+
+
+class FaceDetectionService:
+    """Service xử lý face detection với batch processing"""
+    
+    def __init__(self, 
+                 device: str = 'cuda',
+                 batch_size: int = 16,
+                 checkpoint_path: str = "checkpoints/s3fd-619a316812.pth"):
+        """
+        Initialize Face Detection Service
+        
+        Args:
+            device: Device để chạy inference ('cuda' hoặc 'cpu')
+            batch_size: Batch size cho face detection
+            checkpoint_path: Path đến face detection checkpoint
+        """
+        self.device = device
+        self.batch_size = batch_size
+        self.checkpoint_path = checkpoint_path
+        self.detector = None
+        
+        # Validate checkpoint
+        if not os.path.exists(checkpoint_path):
+            logger.warning(f"Face detection checkpoint not found: {checkpoint_path}")
+        
+        logger.info(f"FaceDetectionService initialized with device: {device}, batch_size: {batch_size}")
+    
+    def _initialize_detector(self):
+        """Lazy initialization của face detector"""
+        if self.detector is None:
+            try:
+                self.detector = face_detection.FaceAlignment(
+                    face_detection.LandmarksType._2D, 
+                    flip_input=False, 
+                    device=self.device
+                )
+                logger.info("Face detector initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize face detector: {e}")
+                raise e
+    
+    def detect_faces_batch(self, images: List[np.ndarray]) -> List[Optional[Tuple[int, int, int, int]]]:
+        """
+        Detect faces trong batch images với retry mechanism
+        
+        Args:
+            images: List các frames (BGR format)
+            
+        Returns:
+            List các bounding boxes (x1, y1, x2, y2) hoặc None nếu không detect được
+        """
+        self._initialize_detector()
+        
+        batch_size = self.batch_size
+        
+        while True:
+            predictions = []
+            try:
+                # Process in batches
+                for i in range(0, len(images), batch_size):
+                    batch = np.array(images[i:i + batch_size])
+                    batch_predictions = self.detector.get_detections_for_batch(batch)
+                    predictions.extend(batch_predictions)
+                break
+                
+            except RuntimeError as e:
+                if batch_size == 1:
+                    logger.error(f"Image too big for face detection: {e}")
+                    raise RuntimeError('Image too big to run face detection on GPU. Please use --resize_factor argument')
+                
+                batch_size //= 2
+                logger.warning(f'Recovering from OOM error; New batch size: {batch_size}')
+                continue
+        
+        return predictions
+    
+    def get_smoothened_boxes(self, boxes: List[Tuple[int, int, int, int]], T: int = 5) -> List[Tuple[int, int, int, int]]:
+        """
+        Smooth face detection boxes qua temporal window
+        
+        Args:
+            boxes: List các bounding boxes
+            T: Window size cho smoothing
+            
+        Returns:
+            Smoothed bounding boxes
+        """
+        if len(boxes) <= T:
+            return boxes
+            
+        smoothed = []
+        for i in range(len(boxes)):
+            if i + T > len(boxes):
+                window = boxes[len(boxes) - T:]
+            else:
+                window = boxes[i:i + T]
+            
+            # Convert None boxes to previous valid box for smoothing
+            valid_boxes = [box for box in window if box is not None]
+            if valid_boxes:
+                mean_box = np.mean(valid_boxes, axis=0).astype(int)
+                smoothed.append(tuple(mean_box))
+            else:
+                smoothed.append(boxes[i])  # Keep original if no valid boxes
+                
+        return smoothed
+    
+    def process_video_frames(self, 
+                           frames: List[np.ndarray],
+                           pads: Tuple[int, int, int, int] = (0, 10, 0, 0),
+                           smooth: bool = True,
+                           box: Optional[Tuple[int, int, int, int]] = None) -> List[Tuple[np.ndarray, Tuple[int, int, int, int]]]:
+        """
+        Process video frames để extract faces với bounding boxes
+        
+        Args:
+            frames: List các video frames
+            pads: Padding (top, bottom, left, right)
+            smooth: Có smooth detection boxes không
+            box: Fixed bounding box nếu có
+            
+        Returns:
+            List của (cropped_face, coordinates) cho mỗi frame
+        """
+        if box and box != (-1, -1, -1, -1):
+            # Use fixed bounding box
+            logger.info('Using specified bounding box instead of face detection...')
+            y1, y2, x1, x2 = box
+            results = []
+            for frame in frames:
+                face = frame[y1:y2, x1:x2]
+                results.append((face, (x1, y1, x2, y2)))
+            return results
+        
+        # Face detection
+        logger.info(f"Detecting faces in {len(frames)} frames...")
+        predictions = self.detect_faces_batch(frames)
+        
+        # Validate detections
+        for i, rect in enumerate(predictions):
+            if rect is None:
+                # Save faulty frame for debugging
+                faulty_path = Path('temp/faulty_frame.jpg')
+                faulty_path.parent.mkdir(exist_ok=True)
+                cv2.imwrite(str(faulty_path), frames[i])
+                raise ValueError(f'Face not detected in frame {i}! Ensure the video contains a face in all frames.')
+        
+        # Apply padding and extract coordinates
+        pady1, pady2, padx1, padx2 = pads
+        coordinates = []
+        
+        for rect, frame in zip(predictions, frames):
+            x1, y1, x2, y2 = rect
+            
+            # Apply padding
+            y1 = max(0, y1 - pady1)
+            y2 = min(frame.shape[0], y2 + pady2)
+            x1 = max(0, x1 - padx1)
+            x2 = min(frame.shape[1], x2 + padx2)
+            
+            coordinates.append((x1, y1, x2, y2))
+        
+        # Smooth detection boxes
+        if smooth:
+            coordinates = self.get_smoothened_boxes(coordinates, T=5)
+        
+        # Extract faces
+        results = []
+        for frame, (x1, y1, x2, y2) in zip(frames, coordinates):
+            face = frame[y1:y2, x1:x2]
+            results.append((face, (x1, y1, x2, y2)))
+        
+        logger.info(f"Successfully processed {len(results)} frames")
+        return results
+    
+    def cleanup(self):
+        """Cleanup detector để giải phóng memory"""
+        if self.detector is not None:
+            del self.detector
+            self.detector = None
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            logger.info("Face detector cleaned up") 

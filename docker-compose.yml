@@ -1,11 +1,15 @@
 version: "3.9"
+
 services:
-  compressed-wav2lip:
-    image: nota-compressed-wav2lip:dev
-    build: ./
-    container_name: nota-compressed-wav2lip
+  illuminus:
+    image: illuminus:latest
+    build: .
+    container_name: illuminus
     ipc: host
     ports:
-      - "7860:7860"
+      - "8000:8000"
     volumes:
       - ./:/workspace
+    environment:
+      - PYTHONPATH=/workspace
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
