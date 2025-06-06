@@ -20,6 +20,6 @@ __pycache__
 *.gz
 *.json
 
+logs/
 results*
 temp/
-data/lrs3_v0.4_txt/lrs3_v0.4/
