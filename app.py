@@ -124,11 +124,20 @@ async def generate_video(
     pads_right: int = Form(0),
     # Video processing options
     resize_factor: int = Form(1),
+    static: bool = Form(False),
     nosmooth: bool = Form(False)
 ):
     """
-    Generate lip-sync video with face detection pipeline
+    [LEGACY API] Generate lip-sync video with face detection pipeline
+    
+    ⚠️  WARNING: This REST API is deprecated for assignment requirements.
+    ⚡ Please use WebSocket API at /ws/lip-sync for real-time processing.
+    
+    This endpoint is kept for backward compatibility but assignment requires
+    WebSocket-only implementation.
     """
+    logger.warning("⚠️  REST API /generate called - Assignment requires WebSocket API only!")
+    
     start_time = time.time()
     
     # Generate unique IDs for files using timestamp + short UUID
@@ -185,7 +194,7 @@ async def generate_video(
             nosmooth=nosmooth,
             # Video processing options
             resize_factor=resize_factor,
-            static=False,  # Always disabled static mode - auto-loop enabled
+            static=static,
             output_path=str(output_path)
         )
         

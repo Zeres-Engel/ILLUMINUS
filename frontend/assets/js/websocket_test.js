@@ -26,14 +26,12 @@ class WebSocketTestClient {
             cancelBtn: document.getElementById('cancelBtn'),
             connectionStatus: document.getElementById('connectionStatus'),
             audioFile: document.getElementById('audioFile'),
-            videoFile: document.getElementById('videoFile'),
+            imageFile: document.getElementById('imageFile'),
             modelType: document.getElementById('modelType'),
             resizeFactor: document.getElementById('resizeFactor'),
             progressSection: document.getElementById('progressSection'),
             progressBar: document.getElementById('progressBar'),
             progressText: document.getElementById('progressText'),
-            progressPercent: document.getElementById('progressPercent'),
-            progressDetails: document.getElementById('progressDetails'),
             resultSection: document.getElementById('resultSection'),
             resultVideo: document.getElementById('resultVideo'),
             downloadBtn: document.getElementById('downloadBtn'),
@@ -88,7 +86,7 @@ class WebSocketTestClient {
     }
     
     updateProcessBtn() {
-        const hasFiles = this.elements.audioFile.files[0] && this.elements.videoFile.files[0];
+        const hasFiles = this.elements.audioFile.files[0] && this.elements.imageFile.files[0];
         this.elements.processBtn.disabled = !this.isConnected || !hasFiles || this.isProcessing;
     }
     
@@ -147,8 +145,8 @@ class WebSocketTestClient {
     }
     
     async startProcessing() {
-        if (!this.elements.audioFile.files[0] || !this.elements.videoFile.files[0]) {
-            this.log('❌ Please select both audio and video/image files', 'error');
+        if (!this.elements.audioFile.files[0] || !this.elements.imageFile.files[0]) {
+            this.log('❌ Please select both audio and image files', 'error');
             return;
         }
         
@@ -163,29 +161,20 @@ class WebSocketTestClient {
             
             // Read files
             const audioFile = this.elements.audioFile.files[0];
-            const videoFile = this.elements.videoFile.files[0];
+            const imageFile = this.elements.imageFile.files[0];
             
             const audioBase64 = await this.fileToBase64(audioFile);
-            const videoBase64 = await this.fileToBase64(videoFile);
+            const imageBase64 = await this.fileToBase64(imageFile);
             
             this.log(`📊 Audio: ${this.formatSize(audioFile.size)}`, 'info');
-            
-            // Detect file type
-            const isVideo = videoFile.type.startsWith('video/');
-            const fileIcon = isVideo ? '🎬' : '🖼️';
-            const fileType = isVideo ? 'Video' : 'Image';
-            this.log(`${fileIcon} ${fileType}: ${this.formatSize(videoFile.size)}`, 'info');
-            
-            if (!isVideo) {
-                this.log('📝 Image will be auto-looped to match audio length', 'info');
-            }
+            this.log(`🖼️ Image: ${this.formatSize(imageFile.size)}`, 'info');
             
             // Prepare options
             const options = {
                 model_type: this.elements.modelType.value === 'original' ? 'wav2lip' : 'nota_wav2lip',
                 resize_factor: parseInt(this.elements.resizeFactor.value),
                 audio_format: audioFile.name.split('.').pop().toLowerCase(),
-                video_format: videoFile.name.split('.').pop().toLowerCase(),
+                image_format: imageFile.name.split('.').pop().toLowerCase(),
                 pads: [0, 10, 0, 0],
                 nosmooth: false
             };
@@ -194,7 +183,7 @@ class WebSocketTestClient {
             this.sendMessage({
                 type: 'process',
                 audio_base64: audioBase64,
-                video_base64: videoBase64,
+                image_base64: imageBase64,
                 options: options
             });
             
@@ -259,22 +248,6 @@ class WebSocketTestClient {
     updateProgress(progress, message) {
         this.elements.progressBar.style.width = `${progress}%`;
         this.elements.progressText.textContent = message;
-        this.elements.progressPercent.textContent = `${Math.round(progress)}%`;
-        
-        // Add real-time visual effects
-        if (progress < 25) {
-            this.elements.progressBar.className = 'progress-bar bg-gradient-to-r from-red-500 to-orange-500 h-6 rounded-full transition-all duration-300 ease-out shadow-lg';
-        } else if (progress < 50) {
-            this.elements.progressBar.className = 'progress-bar bg-gradient-to-r from-orange-500 to-yellow-500 h-6 rounded-full transition-all duration-300 ease-out shadow-lg';
-        } else if (progress < 75) {
-            this.elements.progressBar.className = 'progress-bar bg-gradient-to-r from-yellow-500 to-blue-500 h-6 rounded-full transition-all duration-300 ease-out shadow-lg';
-        } else {
-            this.elements.progressBar.className = 'progress-bar bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 h-6 rounded-full transition-all duration-300 ease-out shadow-lg';
-        }
-        
-        // Update details
-        const now = new Date();
-        this.elements.progressDetails.textContent = `Last update: ${now.toLocaleTimeString()}`;
     }
     
     handleResult(data) {

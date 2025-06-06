@@ -130,7 +130,7 @@ class WebSocketManager:
             "timestamp": time.time()
         })
     
-    async def process_lip_sync(self, client_id: str, audio_data: bytes, video_data: bytes, 
+    async def process_lip_sync(self, client_id: str, audio_data: bytes, image_data: bytes, 
                              options: Dict[str, Any]):
         """Process lip-sync in background task"""
         start_time = time.time()
@@ -149,12 +149,12 @@ class WebSocketManager:
                 f.write(audio_data)
             temp_files.append(audio_path)
             
-            # Save video/image file  
-            video_suffix = options.get('video_format', 'mp4')
-            video_path = f"temp/websocket/{job_id}_video.{video_suffix}"
-            with open(video_path, 'wb') as f:
-                f.write(video_data)
-            temp_files.append(video_path)
+            # Save image file  
+            image_suffix = options.get('image_format', 'jpg')
+            image_path = f"temp/websocket/{job_id}_image.{image_suffix}"
+            with open(image_path, 'wb') as f:
+                f.write(image_data)
+            temp_files.append(image_path)
             
             output_path = f"temp/websocket/{job_id}_result.mp4"
             temp_files.append(output_path)
@@ -165,13 +165,13 @@ class WebSocketManager:
             model_type = options.get('model_type', 'nota_wav2lip')  # Default to faster model
             
             result = self.pipeline_service.process_video_audio(
-                video_path=video_path,  # Support both video and image
+                video_path=image_path,  # Use image as single frame
                 audio_path=audio_path,
                 model_type=model_type,
                 pads=options.get('pads', (0, 10, 0, 0)),
                 nosmooth=options.get('nosmooth', False),
                 resize_factor=options.get('resize_factor', 1),
-                static=False,  # Remove static mode - auto-detect and loop if needed
+                static=True,  # Always static for image input
                 output_path=output_path
             )
             
@@ -277,23 +277,23 @@ async def websocket_lip_sync(websocket: WebSocket):
                     
                     # Validate input
                     audio_base64 = message.get("audio_base64")
-                    video_base64 = message.get("video_base64")
+                    image_base64 = message.get("image_base64")
                     
-                    if not audio_base64 or not video_base64:
+                    if not audio_base64 or not image_base64:
                         await manager.send_error(client_id, 
-                            "Missing required fields: audio_base64, video_base64",
+                            "Missing required fields: audio_base64, image_base64",
                             "validation_error")
                         continue
                     
                     try:
                         # Decode base64 data
                         audio_data = base64.b64decode(audio_base64)
-                        video_data = base64.b64decode(video_base64)
+                        image_data = base64.b64decode(image_base64)
                         
                         # Validate sizes
-                        if len(audio_data) == 0 or len(video_data) == 0:
+                        if len(audio_data) == 0 or len(image_data) == 0:
                             await manager.send_error(client_id, 
-                                "Empty audio or video data", 
+                                "Empty audio or image data", 
                                 "validation_error")
                             continue
                             
@@ -303,9 +303,9 @@ async def websocket_lip_sync(websocket: WebSocket):
                                 "validation_error")
                             continue
                             
-                        if len(video_data) > 100 * 1024 * 1024:  # 100MB limit for video
+                        if len(image_data) > 10 * 1024 * 1024:  # 10MB limit
                             await manager.send_error(client_id, 
-                                "Video file too large (max 100MB)", 
+                                "Image file too large (max 10MB)", 
                                 "validation_error")
                             continue
                         
@@ -320,7 +320,7 @@ async def websocket_lip_sync(websocket: WebSocket):
                     
                     # Start processing task
                     task = asyncio.create_task(
-                        manager.process_lip_sync(client_id, audio_data, video_data, options)
+                        manager.process_lip_sync(client_id, audio_data, image_data, options)
                     )
                     manager.processing_tasks[client_id] = task
                     

@@ -79,13 +79,10 @@
                     
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            🎬 Video/Image File  
+                            🖼️ Image File  
                         </label>
-                        <input type="file" id="videoFile" accept="video/*,image/*"
+                        <input type="file" id="imageFile" accept="image/*"
                                class="w-full border border-gray-300 rounded-lg p-2">
-                        <p class="text-xs text-gray-500 mt-1">
-                            📹 Video: MP4, AVI, MOV | 🖼️ Image: JPG, PNG (auto-looped to match audio)
-                        </p>
                     </div>
                 </div>
 
@@ -128,19 +125,11 @@
 
                 <!-- Progress -->
                 <div id="progressSection" class="hidden">
-                    <h3 class="text-lg font-medium mb-2">📊 Real-time Progress</h3>
-                    <div class="bg-gray-200 rounded-full h-6 mb-2 shadow-inner">
-                        <div id="progressBar" class="progress-bar bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 h-6 rounded-full transition-all duration-300 ease-out shadow-lg" style="width: 0%">
-                            <div class="h-full bg-white bg-opacity-20 rounded-full animate-pulse"></div>
-                        </div>
+                    <h3 class="text-lg font-medium mb-2">📊 Progress</h3>
+                    <div class="bg-gray-200 rounded-full h-4 mb-2">
+                        <div id="progressBar" class="progress-bar bg-gradient-to-r from-blue-500 to-indigo-600 h-4 rounded-full" style="width: 0%"></div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <p id="progressText" class="text-sm font-medium text-gray-700">Waiting...</p>
-                        <span id="progressPercent" class="text-lg font-bold text-indigo-600">0%</span>
-                    </div>
-                    <div class="mt-2">
-                        <div id="progressDetails" class="text-xs text-gray-500"></div>
-                    </div>
+                    <p id="progressText" class="text-sm text-gray-600">Waiting...</p>
                 </div>
             </div>
 
