@@ -12,11 +12,8 @@ from typing import List, Tuple, Optional, Union
 from pathlib import Path
 from loguru import logger
 
-# Add root path to import face_detection
-root_path = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(root_path))
-
-import face_detection
+# Import face_detection from models
+from src.models import face_detection
 
 
 class FaceDetectionService:
@@ -25,7 +22,7 @@ class FaceDetectionService:
     def __init__(self, 
                  device: str = 'cuda',
                  batch_size: int = 16,
-                 checkpoint_path: str = "checkpoints/s3fd-619a316812.pth"):
+                 checkpoint_path: str = "data/checkpoints/face_detection/s3fd-619a316812.pth"):
         """
         Initialize Face Detection Service
         

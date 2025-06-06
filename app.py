@@ -13,16 +13,15 @@ import shutil
 import subprocess
 from loguru import logger
 
-from config import hparams as hp
-from config import hparams_gradio as hp_gradio
-
 # Add src to path để có thể import modules
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
-from src.services.wave2lip_pipeline_service import Wave2LipPipelineService
+from src.config import hparams as hp
+
+from src.services.wav2lip_pipeline_service import Wav2LipPipelineService
 
 # Initialize FastAPI app
-app = FastAPI(title="ILLUMINUS Wave2Lip with Face Detection")
+app = FastAPI(title="ILLUMINUS Wav2Lip with Face Detection")
 
 # Configure CORS
 app.add_middleware(
@@ -33,9 +32,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure static files and templates
+# Configure static files and templates  
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+templates = Jinja2Templates(directory="frontend/templates")
 
 # Create necessary directories
 UPLOAD_FOLDER = Path("static/uploads")
@@ -45,31 +45,53 @@ TEMP_FOLDER = Path("temp")
 for folder in [UPLOAD_FOLDER, RESULTS_FOLDER, TEMP_FOLDER]:
     folder.mkdir(parents=True, exist_ok=True)
 
-# Initialize pipeline service (lazy load)
+# Initialize services (lazy load)
 pipeline_service = None
+face_detection_service = None
 
-def get_pipeline_service():
-    """Get or initialize pipeline service"""
-    global pipeline_service
-    if pipeline_service is None:
-        device = hp_gradio.device
-        logger.info(f'Initializing pipeline service with device: {device}')
+def get_services(device='auto'):
+    """Get or initialize services with specific device"""
+    global pipeline_service, face_detection_service
+    
+    if pipeline_service is None or face_detection_service is None:
+        # Determine device
+        if device == 'auto':
+            import torch
+            actual_device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        else:
+            actual_device = device
+            
+        logger.info(f'Initializing services with device: {actual_device}')
         
-        pipeline_service = Wave2LipPipelineService(
-            device=device,
-            face_det_batch_size=16,  # Có thể config từ file
-            wav2lip_batch_size=128,
-            result_dir=str(TEMP_FOLDER)
+        # Initialize face detection service first
+        from src.services.face_detection_service import FaceDetectionService
+        face_detection_service = FaceDetectionService(
+            device=actual_device,
+            batch_size=16
         )
         
-        logger.info("Pipeline service initialized successfully")
+        # Initialize pipeline service with external face detection
+        pipeline_service = Wav2LipPipelineService(
+            device=actual_device,
+            face_det_batch_size=16,
+            wav2lip_batch_size=128,
+            result_dir=str(TEMP_FOLDER),
+            external_face_service=face_detection_service
+        )
+        
+        logger.info("Services initialized successfully")
     
-    return pipeline_service
+    return pipeline_service, face_detection_service
 
 # Configure logging
 logger.add("logs/app.log", rotation="1 day", retention="7 days")
 
 # Routes
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve favicon.ico"""
+    return FileResponse("favicon.ico")
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -79,6 +101,7 @@ async def generate_video(
     video: UploadFile = File(...),
     audio: UploadFile = File(...),
     model: str = Form(...),
+    device: str = Form('auto'),
     # Face detection options
     face_det_batch_size: int = Form(16),
     pads_top: int = Form(0),
@@ -95,10 +118,17 @@ async def generate_video(
     """
     start_time = time.time()
     
-    # Generate unique IDs for files
-    job_id = str(uuid.uuid4())
-    video_path = UPLOAD_FOLDER / f"{job_id}_video.mp4"
-    audio_path = UPLOAD_FOLDER / f"{job_id}_audio.wav"
+    # Generate unique IDs for files using timestamp + short UUID
+    import hashlib
+    timestamp = str(int(time.time()))
+    job_id = hashlib.md5(f"{timestamp}_{video.filename}_{audio.filename}".encode()).hexdigest()[:8]
+    
+    # Use original file extensions
+    video_ext = video.filename.split('.')[-1] if '.' in video.filename else 'mp4'
+    audio_ext = audio.filename.split('.')[-1] if '.' in audio.filename else 'wav'
+    
+    video_path = UPLOAD_FOLDER / f"{job_id}.{video_ext}"
+    audio_path = UPLOAD_FOLDER / f"{job_id}.{audio_ext}"
     output_path = RESULTS_FOLDER / f"{job_id}_result.mp4"
     
     try:
@@ -124,8 +154,8 @@ async def generate_video(
         
         logger.info(f"Files saved: video={video_size} bytes, audio={audio_size} bytes")
         
-        # Get pipeline service
-        service = get_pipeline_service()
+        # Get services with specified device
+        service, _ = get_services(device)
         
         # Set model type
         model_type = 'wav2lip' if model == 'original' else 'nota_wav2lip'
@@ -159,6 +189,7 @@ async def generate_video(
             "frames_processed": result['frames_processed'],
             "video_fps": result['fps'],
             "model_type": model_type,
+            "device_used": device,
             "job_id": job_id
         }
         
@@ -190,9 +221,15 @@ async def generate_video(
 # Health check endpoint
 @app.get("/health")
 async def health_check():
+    import torch
+    
     return {
         "status": "healthy",
         "pipeline_initialized": pipeline_service is not None,
+        "face_detection_initialized": face_detection_service is not None,
+        "gpu_available": torch.cuda.is_available(),
+        "gpu_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
+        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "timestamp": time.time()
     }
 
@@ -228,7 +265,7 @@ async def cleanup_job(job_id: str):
 @app.on_event("startup")
 async def startup_event():
     """Startup event - cleanup old files"""
-    logger.info("Starting ILLUMINUS Wave2Lip application...")
+    logger.info("Starting ILLUMINUS Wav2Lip application...")
     
     # Clean up old files
     current_time = time.time()
@@ -251,13 +288,16 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Shutdown event - cleanup resources"""
-    logger.info("Shutting down ILLUMINUS Wave2Lip application...")
+    logger.info("Shutting down ILLUMINUS Wav2Lip application...")
     
-    # Cleanup pipeline service
-    global pipeline_service
+    # Cleanup services
+    global pipeline_service, face_detection_service
     if pipeline_service:
         pipeline_service.cleanup()
         pipeline_service = None
+    if face_detection_service:
+        face_detection_service.cleanup()
+        face_detection_service = None
     
     logger.info("Application shutdown completed")
 
