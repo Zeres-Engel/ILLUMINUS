@@ -99,7 +99,12 @@ logger.add("logs/app.log", rotation="1 day", retention="7 days")
 @app.get("/favicon.ico")
 async def favicon():
     """Serve favicon.ico"""
-    return FileResponse("favicon.ico")
+    return FileResponse("static/favicon.svg", media_type="image/svg+xml")
+
+@app.get("/favicon.svg")
+async def favicon_svg():
+    """Serve favicon.svg"""
+    return FileResponse("static/favicon.svg", media_type="image/svg+xml")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):

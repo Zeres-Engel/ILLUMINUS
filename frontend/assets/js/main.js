@@ -7,19 +7,23 @@
 
 class CosmicWav2LipInterface {
     constructor() {
-        this.wsMode = false; // WebSocket mode for real-time processing
+        this.ws = null;
+        this.isConnected = false;
+        this.wsMode = true; // Enable WebSocket mode by default
         this.currentFiles = {
             video: null,
-            audio: null
+            audio: null,
+            videoType: 'video' // 'video' or 'image'
         };
         this.isProcessing = false;
         this.startTime = null;
         this.progressInterval = null;
         
-        this.initializeElements();
+            this.initializeElements();
         this.setupEventListeners();
         this.initializeInterface();
         this.checkSystemStatus();
+        this.initializeWebSocket();
     }
 
     initializeElements() {
@@ -39,6 +43,15 @@ class CosmicWav2LipInterface {
         this.audioFileName = document.getElementById('audioFileName');
         this.videoPreviewContainer = document.getElementById('videoPreviewContainer');
         this.audioPlayer = document.getElementById('audioPlayer');
+        
+        // Debug: Check if audio elements exist
+        console.log('Audio elements check:', {
+            audioFile: this.audioFile,
+            audioDropZone: this.audioDropZone,
+            audioPreview: this.audioPreview,
+            audioFileName: this.audioFileName,
+            audioPlayer: this.audioPlayer
+        });
         
         // Configuration elements
         this.modelType = document.getElementById('modelType');
@@ -75,6 +88,9 @@ class CosmicWav2LipInterface {
         // Result elements
         this.resultSection = document.getElementById('resultSection');
         this.originalVideo = document.getElementById('originalVideo');
+        this.originalImage = document.getElementById('originalImage');
+        this.originalTitle = document.getElementById('originalTitle');
+        this.originalMediaContainer = document.getElementById('originalMediaContainer');
         this.resultVideo = document.getElementById('resultVideo');
         this.downloadBtn = document.getElementById('downloadBtn');
         this.newVideoBtn = document.getElementById('newVideoBtn');
@@ -105,10 +121,10 @@ class CosmicWav2LipInterface {
 
     setupDragAndDrop() {
         // Video/Image drop zone
-        this.setupDropZone(this.videoDropZone, this.videoFile, 'video/*,image/*');
+        this.setupDropZone(this.videoDropZone, this.videoFile, ['video', 'image']);
         
         // Audio drop zone  
-        this.setupDropZone(this.audioDropZone, this.audioFile, 'audio/*');
+        this.setupDropZone(this.audioDropZone, this.audioFile, ['audio']);
     }
 
     setupDropZone(dropZone, fileInput, acceptTypes) {
@@ -131,14 +147,19 @@ class CosmicWav2LipInterface {
             if (files.length > 0) {
                 const file = files[0];
                 
-                        // Check file type
-        if (acceptTypes.includes('video') && (file.type.startsWith('video/') || file.type.startsWith('image/'))) {
-            this.setFileInput(fileInput, file);
-        } else if (acceptTypes.includes('audio') && file.type.startsWith('audio/')) {
-            this.setFileInput(fileInput, file);
-        } else {
-            this.showToast('❌ Invalid file type. Please select the correct file format.', 'error');
-        }
+                // Check file type
+                const isValidFile = acceptTypes.some(type => {
+                    if (type === 'video') return file.type.startsWith('video/');
+                    if (type === 'image') return file.type.startsWith('image/');
+                    if (type === 'audio') return file.type.startsWith('audio/');
+                    return false;
+                });
+                
+                if (isValidFile) {
+                    this.setFileInput(fileInput, file);
+                } else {
+                    this.showToast('❌ Invalid file type. Please select the correct file format.', 'error');
+                }
             }
         });
     }
@@ -175,6 +196,7 @@ class CosmicWav2LipInterface {
         const isImage = file.type.startsWith('image/');
         
         if (isVideo) {
+            this.currentFiles.videoType = 'video';
             const video = document.createElement('video');
             video.controls = true;
             video.muted = true;
@@ -186,6 +208,7 @@ class CosmicWav2LipInterface {
             
             this.showToast(`🎬 Video uploaded: ${file.name} (${this.formatFileSize(file.size)})`, 'success');
         } else if (isImage) {
+            this.currentFiles.videoType = 'image';
             const img = document.createElement('img');
             img.className = 'w-full rounded-lg file-preview-cosmic';
             img.src = URL.createObjectURL(file);
@@ -200,7 +223,10 @@ class CosmicWav2LipInterface {
     }
 
     handleAudioUpload(event) {
+        console.log('Audio upload event triggered:', event);
         const file = event.target.files[0];
+        console.log('Audio file selected:', file);
+        
         if (!file) return;
         
         this.currentFiles.audio = file;
@@ -208,6 +234,7 @@ class CosmicWav2LipInterface {
         this.audioPreview.classList.remove('hidden');
         this.audioPlayer.src = URL.createObjectURL(file);
         
+        console.log('Audio file uploaded successfully:', file.name, file.size);
         this.showToast(`🎵 Audio uploaded: ${file.name} (${this.formatFileSize(file.size)})`, 'success');
         this.validateInputs();
     }
@@ -242,12 +269,8 @@ class CosmicWav2LipInterface {
         this.showProgress();
         
         try {
-            // Use WebSocket for real-time processing if available
-            if (this.wsMode) {
-                await this.processWithWebSocket();
-            } else {
-                await this.processWithREST();
-            }
+            // Always use WebSocket for assignment compliance
+            await this.processWithWebSocket();
         } catch (error) {
             console.error('Processing error:', error);
             this.showToast(`❌ Processing failed: ${error.message}`, 'error');
@@ -256,54 +279,178 @@ class CosmicWav2LipInterface {
     }
 
     async processWithREST() {
-        const formData = new FormData();
-        formData.append('video', this.currentFiles.video);
-        formData.append('audio', this.currentFiles.audio);
-        formData.append('model', this.modelType.value);
-        formData.append('device', this.deviceType.value);
-        
-        // Advanced options
-        formData.append('face_det_batch_size', this.faceBatchSize.value);
-        formData.append('pads_top', this.padTop.value);
-        formData.append('pads_bottom', this.padBottom.value);
-        formData.append('pads_left', this.padLeft.value);
-        formData.append('pads_right', this.padRight.value);
-        formData.append('resize_factor', this.resizeFactor.value);
-        formData.append('static', this.staticMode.checked);
-        formData.append('nosmooth', this.noSmooth.checked);
-        
-        this.updateProgress(20, 'Uploading files to cosmic server...');
-        
-        const response = await fetch('/generate', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail?.error || 'Server error');
-        }
-        
-        this.updateProgress(50, 'Processing with cosmic AI...');
-        
-        // Simulate progress for REST API
-        this.startProgressSimulation();
-        
-        const result = await response.json();
-        this.handleResult(result);
+        // This method is deprecated - assignment requires WebSocket only
+        this.showToast('⚠️ REST API is deprecated. Using WebSocket instead...', 'warning');
+        await this.processWithWebSocket();
     }
 
     async processWithWebSocket() {
+        if (!this.isConnected) {
+            // Auto-connect if not connected
+            await this.connectWebSocket();
+        }
+        
+        if (!this.isConnected) {
+            throw new Error('WebSocket connection failed');
+        }
+        
         // Convert files to base64
         this.updateProgress(10, 'Converting files to base64...');
         const audioBase64 = await this.fileToBase64(this.currentFiles.audio);
         const videoBase64 = await this.fileToBase64(this.currentFiles.video);
         
-        this.updateProgress(30, 'Connecting to cosmic WebSocket...');
+        this.updateProgress(30, 'Sending to cosmic AI via WebSocket...');
         
-        // WebSocket processing would go here
-        // For now, fallback to REST
-        await this.processWithREST();
+        // Prepare processing options (assignment compliant)
+        const options = {
+            model_type: this.modelType.value === 'original' ? 'wav2lip' : 'nota_wav2lip',
+            device: this.deviceType.value,
+            audio_format: this.getFileExtension(this.currentFiles.audio.name),
+            image_format: this.getFileExtension(this.currentFiles.video.name),
+            pads: [
+                parseInt(this.padTop.value),
+                parseInt(this.padBottom.value),
+                parseInt(this.padLeft.value),
+                parseInt(this.padRight.value)
+            ],
+            resize_factor: parseInt(this.resizeFactor.value),
+            face_det_batch_size: parseInt(this.faceBatchSize.value),
+            static: this.staticMode.checked,
+            nosmooth: this.noSmooth.checked
+        };
+        
+        // Send processing request (assignment format)
+        const message = {
+            type: 'process',
+            audio_base64: audioBase64.split(',')[1], // Remove data:type;base64, prefix
+            image_base64: videoBase64.split(',')[1],  // Remove data:type;base64, prefix
+            options: options
+        };
+        
+        this.ws.send(JSON.stringify(message));
+        this.updateProgress(40, 'Processing request sent to cosmic AI...');
+    }
+
+    initializeWebSocket() {
+        this.connectWebSocket();
+    }
+
+    async connectWebSocket() {
+        if (this.isConnected) return Promise.resolve();
+        
+        return new Promise((resolve, reject) => {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/lip-sync`;
+                
+                this.ws = new WebSocket(wsUrl);
+                
+                this.ws.onopen = () => {
+                    this.isConnected = true;
+                    this.updateStatus('ready', '🚀 WebSocket Connected - Ready for cosmic processing');
+                    resolve();
+                };
+                
+                this.ws.onmessage = (event) => {
+                    this.handleWebSocketMessage(JSON.parse(event.data));
+                };
+                
+                this.ws.onclose = () => {
+                    this.isConnected = false;
+                    this.updateStatus('error', '⚠️ WebSocket disconnected');
+                };
+                
+                this.ws.onerror = (error) => {
+                    this.isConnected = false;
+                    this.updateStatus('error', '❌ WebSocket connection failed');
+                    reject(new Error('WebSocket connection failed'));
+                };
+                
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    handleWebSocketMessage(message) {
+        switch (message.type) {
+            case 'progress':
+                this.updateProgress(message.progress || 50, message.message || 'Processing...');
+                if (message.metrics) {
+                    // Update real-time metrics
+                    if (message.metrics.processing_time) {
+                        this.processingTime.textContent = `${message.metrics.processing_time.toFixed(1)}s`;
+                    }
+                    if (message.metrics.frames_processed) {
+                        this.framesProcessed.textContent = message.metrics.frames_processed;
+                    }
+                    if (message.metrics.inference_fps) {
+                        this.inferenceSpeed.textContent = `${message.metrics.inference_fps.toFixed(1)}`;
+                    }
+                    if (message.metrics.device) {
+                        this.deviceUsed.textContent = message.metrics.device.toUpperCase();
+                    }
+                }
+                break;
+                
+            case 'result':
+                this.handleWebSocketResult(message);
+                break;
+                
+            case 'error':
+                this.showToast(`❌ Processing error: ${message.message}`, 'error');
+                this.stopProcessing();
+                break;
+                
+            case 'cancelled':
+                this.showToast('🛑 Processing cancelled', 'warning');
+                this.stopProcessing();
+                break;
+                
+            default:
+                console.log('WebSocket message:', message);
+        }
+    }
+
+    handleWebSocketResult(message) {
+        this.stopProcessing();
+        this.updateProgress(100, 'Cosmic processing complete! ✨');
+        
+        // Create video from base64 (assignment requirement)
+        if (message.video_base64) {
+            const videoBlob = this.base64ToBlob(message.video_base64, 'video/mp4');
+            const videoUrl = URL.createObjectURL(videoBlob);
+            
+            // Store for download
+            this.downloadUrl = videoUrl;
+            this.resultVideoBlob = videoBlob;
+            
+            // Show result using WebSocket data
+            const result = {
+                video_url: videoUrl,
+                total_processing_time: message.metrics?.processing_time || 0,
+                inference_fps: message.metrics?.inference_fps || 0,
+                frames_processed: message.metrics?.frames_processed || 0,
+                model_type: message.metrics?.model_type || 'Unknown'
+            };
+            
+            this.showResult(result);
+            this.showToast('✨ Cosmic video generated successfully via WebSocket!', 'success');
+        }
+    }
+
+    base64ToBlob(base64, mimeType) {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], { type: mimeType });
+    }
+
+    getFileExtension(filename) {
+        return filename.split('.').pop().toLowerCase();
     }
 
     startProgressSimulation() {
@@ -369,8 +516,16 @@ class CosmicWav2LipInterface {
     showResult(result) {
         this.resultSection.classList.remove('hidden');
         
-        // Set original video
-        if (this.currentFiles.video) {
+        // Update title and display based on file type
+        if (this.currentFiles.videoType === 'image') {
+            this.originalTitle.textContent = '🖼️ Original Image';
+            this.originalVideo.classList.add('hidden');
+            this.originalImage.classList.remove('hidden');
+            this.originalImage.src = URL.createObjectURL(this.currentFiles.video);
+        } else {
+            this.originalTitle.textContent = '📥 Original Video';
+            this.originalImage.classList.add('hidden');
+            this.originalVideo.classList.remove('hidden');
             this.originalVideo.src = URL.createObjectURL(this.currentFiles.video);
         }
         
@@ -397,13 +552,19 @@ class CosmicWav2LipInterface {
     }
 
     downloadResult() {
-        if (this.downloadUrl) {
-            const a = document.createElement('a');
-            a.href = this.downloadUrl;
+        if (this.downloadUrl || this.resultVideoBlob) {
+            const url = this.downloadUrl || URL.createObjectURL(this.resultVideoBlob);
+        const a = document.createElement('a');
+            a.href = url;
             a.download = `illuminus_cosmic_result_${Date.now()}.mp4`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+            // Clean up if we created a temporary URL
+            if (this.resultVideoBlob && !this.downloadUrl) {
+                URL.revokeObjectURL(url);
+            }
             
             this.showToast('📥 Cosmic video downloaded!', 'success');
         }
@@ -411,7 +572,7 @@ class CosmicWav2LipInterface {
 
     resetInterface() {
         // Reset files
-        this.currentFiles = { video: null, audio: null };
+        this.currentFiles = { video: null, audio: null, videoType: 'video' };
         this.videoFile.value = '';
         this.audioFile.value = '';
         
@@ -420,6 +581,11 @@ class CosmicWav2LipInterface {
         this.audioPreview.classList.add('hidden');
         this.progressSection.classList.add('hidden');
         this.resultSection.classList.add('hidden');
+        
+        // Reset original media display
+        this.originalTitle.textContent = '📥 Original Video';
+        this.originalVideo.classList.remove('hidden');
+        this.originalImage.classList.add('hidden');
         
         // Reset processing state
         this.stopProcessing();
@@ -465,8 +631,8 @@ class CosmicWav2LipInterface {
                 this.gpuStatus.className = 'text-yellow-400 text-sm md:text-base';
             }
             
-            // Check WebSocket support
-            this.wsMode = false; // Set to true when WebSocket is fully implemented
+            // WebSocket is always enabled for assignment compliance
+            console.log('System status:', status);
             
         } catch (error) {
             console.error('System status check failed:', error);
