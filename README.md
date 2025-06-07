@@ -61,7 +61,7 @@
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (Recommended)
+### Docker (Recommended)
 
 ```bash
 # Clone the repository
@@ -74,32 +74,6 @@ docker-compose up
 # Access the application
 open http://localhost:8000
 ```
-
-### Option 2: Manual Installation
-
-```bash
-# 1. Clone repository
-git clone https://github.com/Zeres-Engel/ILLUMINUS.git
-cd ILLUMINUS
-
-# 2. Create virtual environment
-python -m venv illuminus_env
-source illuminus_env/bin/activate  # Linux/Mac
-# illuminus_env\Scripts\activate   # Windows
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Download AI models
-python scripts/download_models.py
-
-# 5. Start the application
-python app.py
-
-# 6. Open browser
-open http://localhost:8000
-```
-
 ---
 
 ## 📋 Step-by-Step Installation Guide
@@ -126,22 +100,6 @@ sudo apt install ffmpeg -y
 
 # Install CUDA (optional, for GPU support)
 # Follow NVIDIA CUDA installation guide for your system
-```
-
-#### Windows
-```bash
-# Install Python from python.org
-# Install FFmpeg from ffmpeg.org
-# Install CUDA from NVIDIA developer website
-```
-
-#### macOS
-```bash
-# Install Homebrew if not installed
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Python and FFmpeg
-brew install python3 ffmpeg
 ```
 
 ### 2. Project Setup
