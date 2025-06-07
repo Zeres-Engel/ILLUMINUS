@@ -470,24 +470,6 @@ websocket:
 
 ---
 
-## 📊 Performance Benchmarks
-
-### Processing Speed Comparison
-| Model | Device | Resolution | FPS | Memory Usage |
-|-------|--------|------------|-----|--------------|
-| Original Wav2Lip | CPU | 720p | 0.5 FPS | 2GB RAM |
-| Original Wav2Lip | GPU | 720p | 15 FPS | 4GB VRAM |
-| Compressed Model | CPU | 720p | 14 FPS | 1GB RAM |
-| Compressed Model | GPU | 720p | 420 FPS | 2GB VRAM |
-
-### File Size Limits
-- **Video Input**: Up to 100MB
-- **Image Input**: Up to 10MB  
-- **Audio Input**: Up to 50MB
-- **Output Video**: Varies based on input length
-
----
-
 ## 🔍 Troubleshooting
 
 ### Common Issues
