@@ -29,19 +29,28 @@ RUN pip install --no-cache-dir \
     uvloop \
     httptools
 
-# Create necessary directories
+# 🔥 OPTIMIZATION: Create all necessary directories including checkpoints
 RUN mkdir -p /app/static/uploads \
     /app/static/results \
+    /app/static/session/uploads \
+    /app/static/session/results \
     /app/temp \
+    /app/temp/websocket/session \
     /app/logs \
     /app/frontend/templates \
-    /app/models
+    /app/models \
+    /app/data/checkpoints/face_detection \
+    /app/data/checkpoints/wav2lip \
+    /app/data/checkpoints/.torch
 
 # Copy application code
 COPY . .
 
-# Set Python path
+# Set Python path and checkpoint environment
 ENV PYTHONPATH=/app
+# 🔥 CHECKPOINT: Configure torch to use local checkpoints
+ENV TORCH_HOME=/app/data/checkpoints/.torch
+ENV CHECKPOINT_DIR=/app/data/checkpoints
 
 # Expose the port the app runs on
 EXPOSE 8000

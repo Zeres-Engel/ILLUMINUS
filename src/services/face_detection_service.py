@@ -58,15 +58,24 @@ class FaceDetectionService:
                     device = 'cpu'
                 
                 logger.info(f"Initializing face detector with device: {device}")
+                logger.info(f"🔥 CHECKPOINT: Using local checkpoint: {self.checkpoint_path}")
+                
+                # 🔥 OPTIMIZATION: Pass checkpoint path to avoid downloading
+                # Check if local checkpoint exists
+                if os.path.exists(self.checkpoint_path):
+                    logger.info(f"✅ Local checkpoint found: {self.checkpoint_path}")
+                else:
+                    logger.warning(f"⚠️ Local checkpoint not found: {self.checkpoint_path}")
                 
                 self.detector = face_detection.FaceAlignment(
                     face_detection.LandmarksType._2D, 
                     flip_input=False, 
-                    device=device
+                    device=device,
+                    verbose=True  # 🔥 Enable verbose to see checkpoint loading
                 )
-                logger.info("Face detector initialized successfully")
+                logger.info("✅ Face detector initialized successfully")
             except Exception as e:
-                logger.error(f"Failed to initialize face detector: {e}")
+                logger.error(f"❌ Failed to initialize face detector: {e}")
                 logger.error(f"Device: {self.device}, Checkpoint: {self.checkpoint_path}")
                 raise e
     

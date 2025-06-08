@@ -13,17 +13,49 @@ models_urls = {
     's3fd': 'https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth',
 }
 
+# 🔥 OPTIMIZATION: Local checkpoint paths to avoid downloading
+LOCAL_CHECKPOINT_PATHS = [
+    'data/checkpoints/face_detection/s3fd-619a316812.pth',  # Host path
+    '/app/data/checkpoints/face_detection/s3fd-619a316812.pth',  # Container path
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 's3fd.pth'),  # Original fallback
+]
+
 
 class SFDDetector(FaceDetector):
-    def __init__(self, device, path_to_detector=os.path.join(os.path.dirname(os.path.abspath(__file__)), 's3fd.pth'), verbose=False):
+    def __init__(self, device, path_to_detector=None, verbose=False):
         super(SFDDetector, self).__init__(device, verbose)
 
-        # Initialise the face detector
-        if not os.path.isfile(path_to_detector):
-            model_weights = load_url(models_urls['s3fd'])
+        # 🔥 OPTIMIZATION: Try local checkpoints first before downloading
+        model_weights = None
+        checkpoint_used = None
+        
+        # Priority 1: Use provided path
+        if path_to_detector and os.path.isfile(path_to_detector):
+            if verbose:
+                print(f"✅ Loading face detection from provided path: {path_to_detector}")
+            model_weights = torch.load(path_to_detector, map_location=device)
+            checkpoint_used = path_to_detector
         else:
-            model_weights = torch.load(path_to_detector)
+            # Priority 2: Try local checkpoint paths
+            for local_path in LOCAL_CHECKPOINT_PATHS:
+                if os.path.isfile(local_path):
+                    if verbose:
+                        print(f"✅ Loading face detection from local checkpoint: {local_path}")
+                    model_weights = torch.load(local_path, map_location=device)
+                    checkpoint_used = local_path
+                    break
+            
+            # Priority 3: Download if no local checkpoint found (LAST RESORT)
+            if model_weights is None:
+                if verbose:
+                    print(f"⚠️  No local checkpoint found, downloading from: {models_urls['s3fd']}")
+                model_weights = load_url(models_urls['s3fd'], map_location=device)
+                checkpoint_used = "downloaded"
 
+        if verbose:
+            print(f"🎯 Face detection checkpoint loaded from: {checkpoint_used}")
+
+        # Initialise the face detector
         self.face_detector = s3fd()
         self.face_detector.load_state_dict(model_weights)
         self.face_detector.to(device)

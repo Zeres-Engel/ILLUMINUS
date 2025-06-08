@@ -44,6 +44,8 @@ app.include_router(utility_router, tags=["Utilities"])
 # Configure static files and templates  
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+# 🔥 NEW: Mount session directories for optimized file access
+app.mount("/session", StaticFiles(directory="static/session"), name="session")
 templates = Jinja2Templates(directory="frontend/templates")
 
 # Create necessary directories
@@ -51,7 +53,11 @@ UPLOAD_FOLDER = Path("static/uploads")
 RESULTS_FOLDER = Path("static/results")
 TEMP_FOLDER = Path("temp")
 
-for folder in [UPLOAD_FOLDER, RESULTS_FOLDER, TEMP_FOLDER]:
+# Add session-based directories for better file management
+SESSION_UPLOAD_FOLDER = Path("static/session/uploads")
+SESSION_RESULTS_FOLDER = Path("static/session/results")
+
+for folder in [UPLOAD_FOLDER, RESULTS_FOLDER, TEMP_FOLDER, SESSION_UPLOAD_FOLDER, SESSION_RESULTS_FOLDER]:
     folder.mkdir(parents=True, exist_ok=True)
 
 # Initialize services (lazy load)
@@ -133,38 +139,44 @@ async def generate_video(
     nosmooth: bool = Form(False)
 ):
     """
-    [LEGACY API] Generate lip-sync video with face detection pipeline
+    [OPTIMIZED API] Generate lip-sync video with fixed file naming
     
     ⚠️  WARNING: This REST API is deprecated for assignment requirements.
     ⚡ Please use WebSocket API at /ws/lip-sync for real-time processing.
     
-    This endpoint is kept for backward compatibility but assignment requires
-    WebSocket-only implementation.
+    🔥 OPTIMIZED: Uses fixed file names (input.mp4, input.wav) to prevent memory bloat
     """
     logger.warning("⚠️  REST API /generate called - Assignment requires WebSocket API only!")
     
     start_time = time.time()
     
-    # Generate unique IDs for files using timestamp + short UUID
-    import hashlib
-    timestamp = str(int(time.time()))
-    job_id = hashlib.md5(f"{timestamp}_{video.filename}_{audio.filename}".encode()).hexdigest()[:8]
-    
-    # Use original file extensions
+    # 🔥 OPTIMIZATION: Use fixed file names instead of random job IDs
+    # This prevents memory bloat from accumulating files
     video_ext = video.filename.split('.')[-1] if '.' in video.filename else 'mp4'
     audio_ext = audio.filename.split('.')[-1] if '.' in audio.filename else 'wav'
     
-    video_path = UPLOAD_FOLDER / f"{job_id}.{video_ext}"
-    audio_path = UPLOAD_FOLDER / f"{job_id}.{audio_ext}"
-    output_path = RESULTS_FOLDER / f"{job_id}_result.mp4"
+    # Fixed file names to prevent accumulation
+    video_path = SESSION_UPLOAD_FOLDER / f"input.{video_ext}"
+    audio_path = SESSION_UPLOAD_FOLDER / f"input.{audio_ext}"
+    output_path = SESSION_RESULTS_FOLDER / "result.mp4"
+    
+    # Generate session ID for tracking (not for file naming)
+    import hashlib
+    timestamp = str(int(time.time()))
+    session_id = hashlib.md5(f"{timestamp}_{video.filename}_{audio.filename}".encode()).hexdigest()[:8]
     
     try:
         # Validate uploads
         if not video.filename or not audio.filename:
             raise HTTPException(status_code=400, detail="Both video and audio files are required")
         
-        # Save uploaded files
-        logger.info(f"Processing job {job_id}: video={video.filename}, audio={audio.filename}")
+        # 🔥 CLEANUP: Remove existing files before saving new ones
+        for cleanup_file in [video_path, audio_path, output_path]:
+            cleanup_file.unlink(missing_ok=True)
+        
+        # Save uploaded files with fixed names
+        logger.info(f"Processing session {session_id}: video={video.filename}, audio={audio.filename}")
+        logger.info(f"Using fixed paths: video={video_path}, audio={audio_path}")
         
         with open(video_path, "wb") as buffer:
             shutil.copyfileobj(video.file, buffer)
@@ -206,10 +218,11 @@ async def generate_video(
         # Calculate total processing time
         total_processing_time = time.time() - start_time
         
-        # Prepare response
+        # Prepare response with session tracking
         response_data = {
             "status": "success",
-            "video_url": f"/static/results/{output_path.name}",
+            "video_url": f"/static/session/results/{output_path.name}",
+            "download_url": f"/download/result",  # Fixed download endpoint
             "total_processing_time": total_processing_time,
             "pipeline_processing_time": result['processing_time'],
             "inference_fps": result['inference_fps'],
@@ -217,15 +230,20 @@ async def generate_video(
             "video_fps": result['fps'],
             "model_type": model_type,
             "device_used": device,
-            "job_id": job_id
+            "session_id": session_id,
+            "optimization": {
+                "fixed_naming": "✅ input.mp4, input.wav, result.mp4",
+                "memory_safe": "✅ Auto cleanup prevents bloat",
+                "file_size": f"Input: {video_size + audio_size} bytes, Output: {output_path.stat().st_size if output_path.exists() else 0} bytes"
+            }
         }
         
-        logger.info(f"Job {job_id} completed successfully: {response_data}")
+        logger.info(f"Session {session_id} completed successfully: {response_data}")
         
         return response_data
         
     except Exception as e:
-        logger.error(f"Error processing job {job_id}: {str(e)}")
+        logger.error(f"Error processing session {session_id}: {str(e)}")
         
         # Cleanup in case of error
         for path in [video_path, audio_path, output_path]:
@@ -234,16 +252,16 @@ async def generate_video(
         # Return detailed error for debugging
         error_detail = {
             "error": str(e),
-            "job_id": job_id,
+            "session_id": session_id,
             "processing_time": time.time() - start_time
         }
         
         raise HTTPException(status_code=500, detail=error_detail)
     
     finally:
-        # Cleanup uploaded files (keep result)
-        video_path.unlink(missing_ok=True)
-        audio_path.unlink(missing_ok=True)
+        # Note: Keep input files for potential re-processing
+        # Only cleanup on next request or explicit cleanup call
+        logger.info(f"Session {session_id} processing completed, files retained for potential re-use")
 
 # Health check endpoint
 @app.get("/health")
@@ -260,34 +278,132 @@ async def health_check():
         "timestamp": time.time()
     }
 
+@app.get("/status")
+async def get_current_status():
+    """Get current processing status and available files"""
+    
+    # Check for input files
+    input_files = {}
+    for file_type in ["video", "audio"]:
+        extensions = {
+            "video": ["mp4", "avi", "mov", "mkv"],
+            "audio": ["wav", "mp3", "m4a", "aac"]
+        }
+        
+        for ext in extensions[file_type]:
+            potential_path = SESSION_UPLOAD_FOLDER / f"input.{ext}"
+            if potential_path.exists():
+                input_files[file_type] = {
+                    "filename": f"input.{ext}",
+                    "size": potential_path.stat().st_size,
+                    "modified": potential_path.stat().st_mtime,
+                    "download_url": f"/download/input/{file_type}"
+                }
+                break
+    
+    # Check for result file
+    result_path = SESSION_RESULTS_FOLDER / "result.mp4"
+    result_info = None
+    if result_path.exists():
+        result_info = {
+            "filename": "result.mp4",
+            "size": result_path.stat().st_size,
+            "modified": result_path.stat().st_mtime,
+            "download_url": "/download/result",
+            "view_url": "/static/session/results/result.mp4"
+        }
+    
+    return {
+        "status": "ready",
+        "optimization": {
+            "fixed_naming": "✅ Using input.* and result.mp4",
+            "memory_safe": "✅ Files overwritten, no accumulation"
+        },
+        "input_files": input_files,
+        "result_file": result_info,
+        "total_input_files": len(input_files),
+        "has_result": result_info is not None,
+        "timestamp": time.time()
+    }
+
+@app.delete("/cleanup")
+async def cleanup_all_files():
+    """Cleanup all session files"""
+    cleaned_files = []
+    
+    # Cleanup session folders
+    for folder in [SESSION_UPLOAD_FOLDER, SESSION_RESULTS_FOLDER]:
+        if folder.exists():
+            for file_path in folder.glob("*"):
+                if file_path.is_file():
+                    try:
+                        file_path.unlink()
+                        cleaned_files.append(str(file_path))
+                    except Exception as e:
+                        logger.warning(f"Could not clean up {file_path}: {e}")
+    
+    return {
+        "status": "cleaned", 
+        "cleaned_files": cleaned_files,
+        "count": len(cleaned_files),
+        "optimization": "✅ Memory freed, ready for new files"
+    }
+
 @app.get("/status/{job_id}")
 async def get_job_status(job_id: str):
-    """Get job status (placeholder for future implementation)"""
-    # This could be extended to track job progress
-    result_path = RESULTS_FOLDER / f"{job_id}_result.mp4"
-    
-    if result_path.exists():
-        return {
-            "job_id": job_id,
-            "status": "completed",
-            "video_url": f"/static/results/{result_path.name}"
-        }
-    else:
-        return {
-            "job_id": job_id,
-            "status": "not_found"
-        }
+    """Get job status (legacy endpoint - now redirects to current status)"""
+    logger.warning("⚠️ Legacy /status/{job_id} called - redirecting to /status")
+    return await get_current_status()
 
 @app.delete("/cleanup/{job_id}")
 async def cleanup_job(job_id: str):
-    """Cleanup job files"""
-    result_path = RESULTS_FOLDER / f"{job_id}_result.mp4"
+    """Cleanup job files (legacy endpoint - now cleans all files)"""
+    logger.warning("⚠️ Legacy /cleanup/{job_id} called - cleaning all session files")
+    return await cleanup_all_files()
+
+# 🔥 NEW: Fixed download endpoint
+@app.get("/download/result")
+async def download_result():
+    """Download the latest generated result video"""
+    result_path = SESSION_RESULTS_FOLDER / "result.mp4"
     
     if result_path.exists():
-        result_path.unlink()
-        return {"status": "cleaned", "job_id": job_id}
+        return FileResponse(
+            str(result_path),
+            media_type="video/mp4",
+            filename="illuminus_result.mp4",
+            headers={"Content-Disposition": "attachment; filename=illuminus_result.mp4"}
+        )
     else:
-        return {"status": "not_found", "job_id": job_id}
+        raise HTTPException(status_code=404, detail="No result video found. Please process a video first.")
+
+@app.get("/download/input/{file_type}")
+async def download_input(file_type: str):
+    """Download input files (video or audio)"""
+    if file_type not in ["video", "audio"]:
+        raise HTTPException(status_code=400, detail="file_type must be 'video' or 'audio'")
+    
+    # Find the input file (check common extensions)
+    extensions = {
+        "video": ["mp4", "avi", "mov", "mkv"],
+        "audio": ["wav", "mp3", "m4a", "aac"]
+    }
+    
+    input_file = None
+    for ext in extensions[file_type]:
+        potential_path = SESSION_UPLOAD_FOLDER / f"input.{ext}"
+        if potential_path.exists():
+            input_file = potential_path
+            break
+    
+    if input_file:
+        return FileResponse(
+            str(input_file),
+            filename=f"illuminus_input_{file_type}.{input_file.suffix[1:]}",
+            headers={"Content-Disposition": f"attachment; filename=illuminus_input_{file_type}.{input_file.suffix[1:]}"}
+        )
+    else:
+        raise HTTPException(status_code=404, detail=f"No input {file_type} found")
 
 @app.on_event("startup")
 async def startup_event():
