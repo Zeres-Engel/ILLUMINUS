@@ -85,7 +85,7 @@ docker-compose -f docker-compose.gpu.yml up
 - 📊 **Stats**: Processing time and performance metrics
 
 ### Video Demo
-[🎬 Watch Demo Video](docs/video/result.gif)
+![🎬 Demo Video](docs/video/result.gif)
 
 ---
 
@@ -182,17 +182,6 @@ If you prefer manual download:
 
 **Wav2Lip Compressed (5MB)**: [Download Compressed](https://netspresso-huggingface-demo-checkpoint.s3.us-east-2.amazonaws.com/compressed-wav2lip/lrs3-nota-wav2lip.pth)
 - Save to: `data/checkpoints/wav2lip/lrs3-nota-wav2lip.pth`
-
----
-
-## 📊 Performance
-
-| Model | Device | Resolution | Speed | Memory |
-|-------|--------|------------|-------|---------|
-| Compressed | CPU | 720p | 14 FPS | 1GB |
-| Compressed | GPU | 720p | 420 FPS | 2GB |
-| Original | CPU | 720p | 0.5 FPS | 2GB |
-| Original | GPU | 720p | 15 FPS | 4GB |
 
 ---
 
