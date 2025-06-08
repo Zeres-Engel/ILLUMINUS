@@ -85,7 +85,7 @@ docker-compose -f docker-compose.gpu.yml up
 - 📊 **Stats**: Processing time and performance metrics
 
 ### Video Demo
-![🎬 Demo Video](docs/video/result.gif)
+<img src="docs/video/result.gif" alt="🎬 Demo Video" width="600">
 
 ---
 
