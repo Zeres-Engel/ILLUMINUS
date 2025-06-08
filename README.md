@@ -11,11 +11,16 @@
   [![WebSocket](https://img.shields.io/badge/WebSocket-API-purple.svg)](https://github.com/Zeres-Engel/ILLUMINUS)
   
   **Advanced AI-powered lip synchronization web application with cosmic-themed UI, GPU acceleration, and real-time WebSocket processing.**
+
+  ### 🌐 **[✨ Try Live Demo ✨](http://illuminusw2l.io.vn/)**
+  **Experience ILLUMINUS Wav2Lip in action! No installation required.**
 </div>
 
 ---
 
 ## 🌟 Features
+
+> ### 🚀 **[Try it now at illuminusw2l.io.vn](http://illuminusw2l.io.vn/)** - No setup required!
 
 - 🚀 **GPU Acceleration**: CUDA support for up to 28× faster processing
 - 🎯 **Advanced Face Detection**: S3FD face detection with batch processing
@@ -25,6 +30,7 @@
 - 🔧 **Flexible Configuration**: Customizable face detection and video processing
 - 🐳 **Docker Support**: One-command deployment
 - 📱 **Responsive Design**: Works on desktop, tablet, and mobile
+- 🌐 **Live Production Demo**: Experience the full power at [illuminusw2l.io.vn](http://illuminusw2l.io.vn/)
 
 ---
 
@@ -61,7 +67,19 @@
 
 ## 🚀 Quick Start
 
-### Docker (Recommended)
+### 🌐 Try Online Demo (Fastest!)
+
+**[🎬 Launch ILLUMINUS Wav2Lip →](http://illuminusw2l.io.vn/)**
+
+Experience the full application instantly without any installation:
+- ✨ Upload your video/image and audio files
+- 🤖 Choose between Original or Compressed AI models  
+- ⚡ Real-time processing with progress updates
+- 📥 Download your cosmic lip-sync result
+
+---
+
+### 🐳 Local Installation (Docker)
 
 ```bash
 # Clone the repository
@@ -236,13 +254,19 @@ result = wav2lip_service.process_video_audio(
 
 ## 🧪 WebSocket API Testing
 
-### Method 1: Web Interface
+### Method 1: Live Online Demo
+```bash
+# Try the production WebSocket API
+open http://illuminusw2l.io.vn/websocket-test
+```
+
+### Method 2: Local Web Interface
 ```bash
 # Access the built-in WebSocket test client
 open http://localhost:8000/websocket-test
 ```
 
-### Method 2: Python Client
+### Method 3: Python Client
 ```python
 import asyncio
 import websockets
@@ -289,7 +313,7 @@ async def test_websocket():
 asyncio.run(test_websocket())
 ```
 
-### Method 3: Command Line Client
+### Method 4: Command Line Client
 ```bash
 # Use the included test script
 python scripts/websocket_test_client.py --audio sample.wav --image person.jpg
@@ -302,11 +326,14 @@ python scripts/websocket_test_client.py \
     --device cuda
 ```
 
-### Method 4: WebSocket Libraries
+### Method 5: WebSocket Libraries
 
 #### JavaScript (Browser)
 ```javascript
-const ws = new WebSocket('ws://localhost:8000/ws/lip-sync');
+// Connect to live demo
+const ws = new WebSocket('ws://illuminusw2l.io.vn/ws/lip-sync');
+// Or connect to local instance
+// const ws = new WebSocket('ws://localhost:8000/ws/lip-sync');
 
 ws.onopen = function() {
     console.log('WebSocket connected');
@@ -328,6 +355,16 @@ ws.onmessage = function(event) {
 
 #### curl (HTTP Upgrade)
 ```bash
+# Test live demo WebSocket
+curl --include \
+     --no-buffer \
+     --header "Connection: Upgrade" \
+     --header "Upgrade: websocket" \
+     --header "Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==" \
+     --header "Sec-WebSocket-Version: 13" \
+     http://illuminusw2l.io.vn/ws/lip-sync
+
+# Or test local instance
 curl --include \
      --no-buffer \
      --header "Connection: Upgrade" \
@@ -700,5 +737,7 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 **Made with ❤️ by [Andrew](https://github.com/Zeres-Engel)**
 
 *Transforming the future of AI-powered video generation, one cosmic lip-sync at a time* ✨
+
+### 🌟 **[Experience ILLUMINUS Live →](http://illuminusw2l.io.vn/)**
 
 </div>
