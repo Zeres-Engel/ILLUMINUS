@@ -60,20 +60,55 @@ class FaceDetectionService:
                 logger.info(f"Initializing face detector with device: {device}")
                 logger.info(f"🔥 CHECKPOINT: Using local checkpoint: {self.checkpoint_path}")
                 
-                # 🔥 OPTIMIZATION: Pass checkpoint path to avoid downloading
+                # 🔥 OPTIMIZATION: Ensure local checkpoint exists and disable torch.hub
+                import os
+                
+                # Temporarily disable torch hub cache to prevent automatic downloads
+                original_torch_home = os.environ.get('TORCH_HOME', '')
+                os.environ['TORCH_HOME'] = '/tmp/disabled_torch_hub'  # Redirect to temp location
+                
+                # Force offline mode if possible
+                original_hub_cache = os.environ.get('TORCH_HUB_CACHE_DIR', '')
+                os.environ['TORCH_HUB_CACHE_DIR'] = '/tmp/disabled_torch_hub'
+                
                 # Check if local checkpoint exists
                 if os.path.exists(self.checkpoint_path):
                     logger.info(f"✅ Local checkpoint found: {self.checkpoint_path}")
                 else:
                     logger.warning(f"⚠️ Local checkpoint not found: {self.checkpoint_path}")
+                    # Try auto-download via checkpoint manager
+                    try:
+                        from src.services.checkpoint_manager import checkpoint_manager
+                        logger.info("🔄 Attempting auto-download via checkpoint manager...")
+                        success = checkpoint_manager.download_checkpoint('face_detection', 's3fd')
+                        if success:
+                            logger.info(f"✅ Auto-download successful")
+                        else:
+                            logger.warning(f"⚠️ Auto-download failed, face detection may download automatically")
+                    except ImportError:
+                        logger.warning("Could not import checkpoint manager")
                 
-                self.detector = face_detection.FaceAlignment(
-                    face_detection.LandmarksType._2D, 
-                    flip_input=False, 
-                    device=device,
-                    verbose=True  # 🔥 Enable verbose to see checkpoint loading
-                )
-                logger.info("✅ Face detector initialized successfully")
+                try:
+                    self.detector = face_detection.FaceAlignment(
+                        face_detection.LandmarksType._2D, 
+                        flip_input=False, 
+                        device=device,
+                        verbose=True  # 🔥 Enable verbose to see checkpoint loading
+                    )
+                    logger.info("✅ Face detector initialized successfully")
+                    
+                finally:
+                    # Restore original environment variables
+                    if original_torch_home:
+                        os.environ['TORCH_HOME'] = original_torch_home
+                    else:
+                        os.environ.pop('TORCH_HOME', None)
+                        
+                    if original_hub_cache:
+                        os.environ['TORCH_HUB_CACHE_DIR'] = original_hub_cache
+                    else:
+                        os.environ.pop('TORCH_HUB_CACHE_DIR', None)
+                        
             except Exception as e:
                 logger.error(f"❌ Failed to initialize face detector: {e}")
                 logger.error(f"Device: {self.device}, Checkpoint: {self.checkpoint_path}")

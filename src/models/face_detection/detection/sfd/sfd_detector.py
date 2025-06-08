@@ -2,6 +2,8 @@ import os
 import cv2
 import torch
 from torch.utils.model_zoo import load_url
+from pathlib import Path
+from loguru import logger
 
 from ..core import FaceDetector
 
@@ -25,7 +27,7 @@ class SFDDetector(FaceDetector):
     def __init__(self, device, path_to_detector=None, verbose=False):
         super(SFDDetector, self).__init__(device, verbose)
 
-        # 🔥 OPTIMIZATION: Try local checkpoints first before downloading
+        # 🔥 OPTIMIZATION: Try local checkpoints first, auto-download if needed
         model_weights = None
         checkpoint_used = None
         
@@ -45,12 +47,37 @@ class SFDDetector(FaceDetector):
                     checkpoint_used = local_path
                     break
             
-            # Priority 3: Download if no local checkpoint found (LAST RESORT)
+            # Priority 3: Auto-download using checkpoint manager
             if model_weights is None:
                 if verbose:
-                    print(f"⚠️  No local checkpoint found, downloading from: {models_urls['s3fd']}")
-                model_weights = load_url(models_urls['s3fd'], map_location=device)
-                checkpoint_used = "downloaded"
+                    print("🔄 No local checkpoint found, attempting auto-download...")
+                
+                try:
+                    from src.services.checkpoint_manager import checkpoint_manager
+                    
+                    # Try to auto-download face detection checkpoint
+                    success = checkpoint_manager.download_checkpoint('face_detection', 's3fd')
+                    
+                    if success:
+                        # Try loading the downloaded checkpoint
+                        for local_path in LOCAL_CHECKPOINT_PATHS:
+                            if os.path.isfile(local_path):
+                                if verbose:
+                                    print(f"✅ Loading auto-downloaded checkpoint: {local_path}")
+                                model_weights = torch.load(local_path, map_location=device)
+                                checkpoint_used = f"auto-downloaded: {local_path}"
+                                break
+                
+                except ImportError as e:
+                    if verbose:
+                        print(f"⚠️ Could not import checkpoint_manager: {e}")
+                
+                # Priority 4: Download manually if auto-download failed (LAST RESORT)
+                if model_weights is None:
+                    if verbose:
+                        print(f"⚠️ Auto-download failed, manual download from: {models_urls['s3fd']}")
+                    model_weights = load_url(models_urls['s3fd'], map_location=device)
+                    checkpoint_used = "manual download"
 
         if verbose:
             print(f"🎯 Face detection checkpoint loaded from: {checkpoint_used}")

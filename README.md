@@ -27,6 +27,7 @@
 - ⚡ **Real-time WebSocket API**: Bi-directional communication with progress updates
 - 🎨 **Cosmic Web Interface**: Modern UI with particle effects and animations
 - 🤖 **Multiple AI Models**: Original Wav2Lip (139MB) and Compressed (4.9MB)
+- 🔥 **Auto-Download**: AI models download automatically on first use
 - 🔧 **Flexible Configuration**: Customizable face detection and video processing
 - 🐳 **Docker Support**: One-command deployment
 - 📱 **Responsive Design**: Works on desktop, tablet, and mobile
@@ -89,6 +90,7 @@ cd ILLUMINUS
 # Run with Docker Compose
 docker-compose up
 
+# ✅ AUTOMATIC: AI models download automatically on first use!
 # Access the application
 open http://localhost:8000
 ```
@@ -147,19 +149,31 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-### 4. AI Models Download
+### 4. AI Models Setup
+
+🔥 **AUTOMATIC DOWNLOAD**: Models are downloaded automatically on first use!
 
 ```bash
-# Download all required models automatically
-python scripts/download_models.py
+# ✅ AUTOMATIC: Just start the application (recommended)
+python app.py
+# Models download automatically when needed - zero setup required!
 
-# Or download specific categories
-python scripts/download_models.py --category wav2lip
-python scripts/download_models.py --category face_detection
+# 🔍 CHECK: Current status
+curl http://localhost:8000/checkpoints/status
 
-# Check available models
-python scripts/download_models.py --list
+# 🔽 FORCE: Download all models immediately  
+curl -X POST http://localhost:8000/checkpoints/auto-setup
 ```
+
+**📥 Manual Download Links (if preferred):**
+- **Face Detection (86MB)**: [Download S3FD Model](https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth)
+- **Wav2Lip Original (139MB)**: [Download LRS3 Model](https://netspresso-huggingface-demo-checkpoint.s3.us-east-2.amazonaws.com/compressed-wav2lip/lrs3-wav2lip.pth)  
+- **Wav2Lip Compressed (5MB)**: [Download Nota Model](https://netspresso-huggingface-demo-checkpoint.s3.us-east-2.amazonaws.com/compressed-wav2lip/lrs3-nota-wav2lip.pth)
+
+Place downloaded files in:
+- `data/checkpoints/face_detection/s3fd-619a316812.pth`
+- `data/checkpoints/wav2lip/lrs3-wav2lip.pth`
+- `data/checkpoints/wav2lip/lrs3-nota-wav2lip.pth`
 
 ### 5. Configuration
 
@@ -313,17 +327,16 @@ async def test_websocket():
 asyncio.run(test_websocket())
 ```
 
-### Method 4: Command Line Client
+### Method 4: Direct WebSocket Testing
 ```bash
-# Use the included test script
-python scripts/websocket_test_client.py --audio sample.wav --image person.jpg
-
-# With custom options
-python scripts/websocket_test_client.py \
-    --audio sample.wav \
-    --image person.jpg \
-    --model nota_wav2lip \
-    --device cuda
+# Test with curl (simple connection test)
+curl --include \
+     --no-buffer \
+     --header "Connection: Upgrade" \
+     --header "Upgrade: websocket" \
+     --header "Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==" \
+     --header "Sec-WebSocket-Version: 13" \
+     http://localhost:8000/ws/lip-sync
 ```
 
 ### Method 5: WebSocket Libraries
@@ -353,26 +366,7 @@ ws.onmessage = function(event) {
 };
 ```
 
-#### curl (HTTP Upgrade)
-```bash
-# Test live demo WebSocket
-curl --include \
-     --no-buffer \
-     --header "Connection: Upgrade" \
-     --header "Upgrade: websocket" \
-     --header "Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==" \
-     --header "Sec-WebSocket-Version: 13" \
-     http://illuminusw2l.io.vn/ws/lip-sync
 
-# Or test local instance
-curl --include \
-     --no-buffer \
-     --header "Connection: Upgrade" \
-     --header "Upgrade: websocket" \
-     --header "Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==" \
-     --header "Sec-WebSocket-Version: 13" \
-     http://localhost:8000/ws/lip-sync
-```
 
 ---
 

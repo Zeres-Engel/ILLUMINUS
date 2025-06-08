@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 from src.config import hparams as hp
 
 from src.services.wav2lip_pipeline_service import Wav2LipPipelineService
-from src.routes import websocket_router, utility_router
+from src.routes import websocket_router, utility_router, checkpoint_router
 
 # Initialize FastAPI app - Assignment Focused
 app = FastAPI(
@@ -40,6 +40,7 @@ app.add_middleware(
 # Include routers - Assignment compliant (WebSocket focused)
 app.include_router(websocket_router, tags=["WebSocket API"])
 app.include_router(utility_router, tags=["Utilities"])
+app.include_router(checkpoint_router, tags=["Checkpoint API"])
 
 # Configure static files and templates  
 app.mount("/static", StaticFiles(directory="static"), name="static")
