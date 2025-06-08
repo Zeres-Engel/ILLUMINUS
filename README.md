@@ -124,9 +124,6 @@ source illuminus_env/bin/activate  # Linux/Mac
 # Install Python packages
 pip install --upgrade pip
 pip install -r requirements.txt
-
-# For development (optional)
-pip install -r requirements-dev.txt
 ```
 
 ### 4. AI Models Download
@@ -143,17 +140,7 @@ python scripts/download_models.py --category face_detection
 python scripts/download_models.py --list
 ```
 
-### 5. Configuration
-
-```bash
-# Copy example configuration (optional)
-cp config/config.example.yaml config/config.yaml
-
-# Edit configuration if needed
-nano config/config.yaml
-```
-
-### 6. Launch Application
+### 55. Launch Application
 
 ```bash
 # Start the server
