@@ -1,15 +1,73 @@
 version: "3.9"
 
 services:
-  illuminus:
-    image: illuminus:latest
-    build: .
-    container_name: illuminus
-    ipc: host
+  # Wav2Lip FastAPI Application  
+  wav2lip-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: illuminus-wav2lip:latest
+    container_name: illuminus_wav2lip
+    restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "9000:8000"  # External port 9000 to avoid conflicts
     volumes:
-      - ./:/workspace
+      # 🔥 OPTIMIZATION: Mount application code for live reload
+      - ./app.py:/app/app.py
+      - ./src:/app/src
+      - ./frontend:/app/frontend
+      
+      # 🔥 CRITICAL: Mount checkpoint directories to avoid re-downloading
+      - ./data/checkpoints:/app/data/checkpoints
+      
+      # Standard mounts for data persistence
+      - ./static:/app/static
+      - ./temp:/app/temp
+      - ./logs:/app/logs
+      - ./models:/app/models
+      
+      # 🔥 NEW: Ensure session directories exist
+      - ./static/session:/app/static/session
     environment:
-      - PYTHONPATH=/workspace
+      - PYTHONPATH=/app
+      - NODE_ENV=production
+      # 🔥 CHECKPOINT: Force use local checkpoints
+      - TORCH_HOME=/app/data/checkpoints/.torch
+      - CHECKPOINT_DIR=/app/data/checkpoints
+    networks:
+      - illuminus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
+  # Nginx Reverse Proxy 
+  nginx:
+    image: nginx:alpine
+    container_name: illuminus_nginx
+    restart: unless-stopped
+    ports:
+      - "9080:80"
+      - "9443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /var/log/nginx:/var/log/nginx
+      - ./static:/var/www/static
+      # 🔥 NEW: Mount session directories for nginx access
+      - ./static/session:/var/www/session
+    networks:
+      - illuminus-network
+    depends_on:
+      - wav2lip-app
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  illuminus-network:
+    driver: bridge

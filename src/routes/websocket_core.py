@@ -153,13 +153,12 @@ class WebSocketManager:
     async def process_lip_sync_assignment(self, client_id: str, audio_data: bytes, 
                                         image_data: bytes, options: Dict[str, Any]):
         """
-        Assignment-compliant lip-sync processing
+        Assignment-compliant lip-sync processing with optimized file management
         Input: base64-decoded audio and image bytes
         Output: base64-encoded video
         """
         start_time = time.time()
         temp_files = []
-        job_id = f"ws_{int(time.time())}_{str(uuid.uuid4())[:8]}"
         
         try:
             # Ensure services are initialized
@@ -168,15 +167,26 @@ class WebSocketManager:
                 
             await self.send_progress(client_id, 5, "🎯 Preparing assignment processing...")
             
-            # Prepare file paths
+            # 🔥 OPTIMIZATION: Use fixed file names instead of unique job IDs
             audio_suffix = options.get('audio_format', 'wav')
             image_suffix = options.get('image_format', 'jpg')
             
-            audio_path = f"temp/websocket/{job_id}_audio.{audio_suffix}"
-            image_path = f"temp/websocket/{job_id}_image.{image_suffix}"
-            output_path = f"temp/websocket/{job_id}_result.mp4"
+            # Fixed paths to prevent memory bloat
+            ws_session_dir = Path("temp/websocket/session")
+            ws_session_dir.mkdir(parents=True, exist_ok=True)
+            
+            audio_path = ws_session_dir / f"input.{audio_suffix}"
+            image_path = ws_session_dir / f"input.{image_suffix}"
+            output_path = ws_session_dir / "result.mp4"
             
             temp_files = [audio_path, image_path, output_path]
+            
+            # Generate session ID for tracking (not for file naming)
+            session_id = f"ws_{int(time.time())}_{str(uuid.uuid4())[:8]}"
+            
+            # 🔥 CLEANUP: Remove existing files before saving new ones
+            for cleanup_file in temp_files:
+                cleanup_file.unlink(missing_ok=True)
             
             # Save files
             await self.send_progress(client_id, 15, "💾 Saving input files...")
@@ -185,6 +195,10 @@ class WebSocketManager:
                 f.write(audio_data)
             with open(image_path, 'wb') as f:
                 f.write(image_data)
+                
+            logger.info(f"WebSocket session {session_id}: Saved files with fixed names")
+            logger.info(f"Audio: {len(audio_data)} bytes -> {audio_path}")
+            logger.info(f"Image: {len(image_data)} bytes -> {image_path}")
                 
             # Validate file sizes
             if len(audio_data) == 0 or len(image_data) == 0:
@@ -196,14 +210,14 @@ class WebSocketManager:
             model_type = options.get('model_type', 'nota_wav2lip')  # Default to faster
             
             result = self.pipeline_service.process_video_audio(
-                video_path=image_path,  # Use image as single frame
-                audio_path=audio_path,
+                video_path=str(image_path),  # Use image as single frame
+                audio_path=str(audio_path),
                 model_type=model_type,
                 pads=options.get('pads', (0, 10, 0, 0)),
                 nosmooth=options.get('nosmooth', False),
                 resize_factor=options.get('resize_factor', 1),
                 static=True,  # Always static for image input (assignment requirement)
-                output_path=output_path
+                output_path=str(output_path)
             )
             
             await self.send_progress(client_id, 80, "📹 Encoding output video...")
@@ -226,13 +240,17 @@ class WebSocketManager:
             if client_id in self.active_connections:
                 await self.send_message(client_id, {
                     "type": "result",
-                    "job_id": job_id,
+                    "session_id": session_id,
                     "video_base64": video_base64,  # Assignment requirement: base64 output
                     "video_size_bytes": len(video_bytes),
                     "processing_time": processing_time,
                     "model_used": model_type,
                     "inference_fps": result.get('inference_fps', 0),
                     "frames_processed": result.get('frames_processed', 0),
+                    "optimization": {
+                        "fixed_naming": "✅ input.wav, input.jpg, result.mp4",
+                        "memory_safe": "✅ Auto cleanup prevents WebSocket bloat"
+                    },
                     "assignment_compliance": {
                         "base64_output": "✅",
                         "realtime_processing": "✅",
@@ -241,9 +259,9 @@ class WebSocketManager:
                     "timestamp": time.time()
                 })
                 
-                logger.info(f"✅ Assignment job {job_id} completed in {processing_time:.2f}s")
+                logger.info(f"✅ WebSocket session {session_id} completed in {processing_time:.2f}s")
             else:
-                logger.info(f"Client {client_id} disconnected before job {job_id} completion")
+                logger.info(f"Client {client_id} disconnected before session {session_id} completion")
                 
         except Exception as e:
             error_msg = f"Assignment processing failed: {str(e)}"
@@ -255,7 +273,7 @@ class WebSocketManager:
             # Cleanup temporary files
             for temp_file in temp_files:
                 try:
-                    Path(temp_file).unlink(missing_ok=True)
+                    temp_file.unlink(missing_ok=True)
                 except Exception as e:
                     logger.warning(f"Could not clean up {temp_file}: {e}")
             
