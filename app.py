@@ -117,10 +117,7 @@ async def favicon_svg():
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/websocket-test", response_class=HTMLResponse)
-async def websocket_test(request: Request):
-    """WebSocket test client page"""
-    return templates.TemplateResponse("websocket_test.html", {"request": request})
+
 
 @app.post("/generate")
 async def generate_video(

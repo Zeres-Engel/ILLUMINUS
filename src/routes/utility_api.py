@@ -149,7 +149,7 @@ async def assignment_info():
             },
             "usage": {
                 "main_interface": "http://localhost:8000/",
-                "websocket_test": "http://localhost:8000/websocket-test",
+    
                 "websocket_url": "ws://localhost:8000/ws/lip-sync"
             }
         },
