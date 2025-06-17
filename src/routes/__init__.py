@@ -14,9 +14,9 @@ Version: 2.0.0 - WebSocket First with Auto-Checkpoint Management
 
 from .websocket_api import router as websocket_router
 from .utility_api import router as utility_router
-from .checkpoint_api import router as checkpoint_router
+from .checkpoint_api import auto_ensure_checkpoints, get_checkpoint_status_summary
 
-# Note: rest_router is intentionally excluded for assignment compliance
+# Note: checkpoint_router removed - now using auto functions
 # Assignment requires WebSocket-only implementation
 
-__all__ = ["websocket_router", "utility_router", "checkpoint_router"] 
+__all__ = ["websocket_router", "utility_router", "auto_ensure_checkpoints", "get_checkpoint_status_summary"] 

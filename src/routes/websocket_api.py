@@ -194,44 +194,17 @@ async def handle_cancel_request(client_id: str):
 
 @router.get("/ws/health")
 async def websocket_health():
-    """WebSocket service health check endpoint"""
+    """WebSocket service health check"""
     stats = websocket_manager.get_connection_stats()
     
     return {
         "status": "healthy",
         "service": "websocket_api",
-        "assignment_compliance": "websocket_only",
-        "statistics": stats,
-        "endpoints": {
-            "websocket": "/ws/lip-sync",
-            "health": "/ws/health"
-        },
-        "supported_features": [
-            "real_time_processing",
-            "base64_input_output",
-            "progress_updates",
-            "bi_directional_communication"
-        ],
+        "websocket_endpoint": "/ws/lip-sync",
+        "connections": stats["active_connections"],
+        "processing": stats["processing_tasks"],
         "timestamp": time.time()
     }
 
 
-@router.get("/ws/stats")
-async def websocket_stats():
-    """Get detailed WebSocket statistics for monitoring"""
-    return {
-        "statistics": websocket_manager.get_connection_stats(),
-        "assignment_requirements": {
-            "websocket_api": "✅ Implemented",
-            "base64_input": "✅ Audio and Image",
-            "base64_output": "✅ Video",
-            "real_time": "✅ Bi-directional communication",
-            "ai_model": "✅ Wav2Lip (Original & Compressed)"
-        },
-        "performance": {
-            "optimized_for": "real_time_processing",
-            "batch_sizes": "optimized_for_websocket",
-            "memory_management": "automatic_cleanup"
-        },
-        "timestamp": time.time()
-    } 
+ 
